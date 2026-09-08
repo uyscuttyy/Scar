@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SCAR — Memory-Aware Swap</title>
+  <link rel="stylesheet" href="/css/app.css?v=3">
+</head>
+<body>
+  <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
+
+  <div class="container">
+    <!-- Header / Nav -->
+    <header style="display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem">
+      <h1>SCAR</h1>
+      <nav class="tabs" role="tablist">
+        <button id="tab-swap" class="tab active" role="tab" aria-selected="true">Swap</button>
+        <button id="tab-history" class="tab" role="tab" aria-selected="false">Your Scars</button>
+      </nav>
+    </header>
+
+    <!-- Screen: Connect -->
+    <section id="screen-connect" class="screen active" aria-labelledby="connect-title">
+      <div class="card" style="max-width:32rem">
+        <h2 id="connect-title">Your memory-aware swap agent.</h2>
+        <p style="color:var(--muted);margin:0.5rem 0 1.5rem">SCAR remembers the conditions behind your bad swaps and won't silently let you repeat them.</p>
+        <button id="btn-connect" class="btn" style="width:100%">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+          Connect Wallet
+        </button>
+        <div id="wallet-picker"></div>
+        <p class="note">Supports MetaMask, Coinbase Wallet, and any WalletConnect-compatible wallet on Base Sepolia.</p>
+        <p id="provider-info" class="note" style="font-family:monospace"></p>
+      </div>
+    </section>
+
+    <!-- Screen: Swap -->
+    <section id="screen-swap" class="screen" aria-labelledby="swap-title">
+      <div class="wallet-display" id="wallet-display" style="display:none;margin-bottom:1rem">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+        <span id="wallet-address" class="wallet-address"></span>
+        <span id="wallet-chain" class="wallet-chain"></span>
+        <button id="btn-disconnect" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+      </div>
+
+      <div class="card">
+        <h2 id="swap-title">SWAP</h2>
+
+        <!-- From -->
+        <div style="margin-bottom:1.5rem">
+          <label for="from-amount">From</label>
+          <div class="input-row">
+            <div style="flex:2">
+              <input id="from-amount" type="number" placeholder="0.00" step="0.000001" min="0" aria-label="Amount to swap">
+            </div>
+            <button id="from-token-btn" class="token-selector" type="button" style="flex:1;min-width:120px" aria-label="Select from token">
+              <span style="font-size:1.25rem">💵</span>
+              <div>
+                <div class="token-symbol">USDC</div>
+                <div class="token-name">USD Coin</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Swap Arrow -->
+        <div style="display:flex;justify-content:center;margin:0.5rem 0">
+          <button id="swap-arrow" class="swap-arrow" type="button" aria-label="Swap tokens" title="Swap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16l5 5 5-5M7 8l5-5 5 5"></path><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+          </button>
+        </div>
+
+        <!-- To -->
+        <div>
+          <label>To</label>
+          <button id="to-token-btn" class="token-selector" type="button" style="width:100%" aria-label="Select to token">
+            <span style="font-size:1.25rem">🔷</span>
+            <div>
+              <div class="token-symbol">WETH</div>
+              <div class="token-name">Wrapped Ether</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Quote loading/error -->
+        <div id="quote-loading" style="display:none;align-items:center;gap:0.75rem;margin:1rem 0;color:var(--warn)">
+          <span class="spinner"></span> Fetching quote…
+        </div>
+        <div id="quote-error" class="error-banner" style="display:none"></div>
+
+        <!-- Review button -->
+        <button id="btn-review" class="btn" style="width:100%;margin-top:1rem" disabled>
+          Review Swap
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen: Decision -->
+    <section id="screen-decision" class="screen" aria-labelledby="decision-title">
+      <div class="wallet-display" id="wallet-display-decision" style="display:flex;margin-bottom:1rem">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+        <span id="wallet-address-decision" class="wallet-address"></span>
+        <span id="wallet-chain-decision" class="wallet-chain"></span>
+        <button id="btn-disconnect-decision" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+      </div>
+
+      <div class="card decision-panel">
+        <h2 id="decision-title">SCAR DECISION</h2>
+
+        <!-- Decision Banner -->
+        <div id="decision-banner" class="decision-banner" role="alert">
+          <div id="decision-icon" class="decision-icon"></div>
+          <div class="decision-content">
+            <div id="decision-title-text" class="decision-title"></div>
+            <div id="decision-message" class="decision-message"></div>
+          </div>
+        </div>
+
+        <!-- Details -->
+        <div id="decision-details" class="decision-details"></div>
+
+        <!-- Blocking Memory -->
+        <div id="decision-memory" style="display:none"></div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
+          <button id="btn-confirm-swap" class="btn" style="display:none">Confirm Swap</button>
+          <button id="btn-back-to-swap" class="btn btn-secondary">Adjust Swap</button>
+        </div>
+
+        <!-- Transaction Status -->
+        <div id="tx-status" class="tx-status" style="display:none">
+          <div class="tx-status-title"></div>
+          <div class="tx-hash"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen: History -->
+    <section id="screen-history" class="screen" aria-labelledby="history-title">
+      <div class="wallet-display" id="wallet-display-history" style="display:flex;margin-bottom:1rem">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+        <span id="wallet-address-history" class="wallet-address"></span>
+        <span id="wallet-chain-history" class="wallet-chain"></span>
+        <button id="btn-disconnect-history" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+      </div>
+
+      <div class="card">
+        <h2 id="history-title">YOUR SCARS</h2>
+        <p style="color:var(--muted);margin-bottom:1rem">Important swap experiences that shape future decisions. Not a full transaction archive.</p>
+        <div id="history-list"></div>
+        <div id="history-empty" class="empty-state" style="display:none">
+          <div class="icon">🧠</div>
+          <p>No important memories yet.</p>
+          <p style="font-size:0.875rem">SCAR only remembers experiences that meaningfully change its decisions.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Token Modal -->
+  <div id="token-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="token-modal-title">Select Token</h3>
+        <button class="btn-ghost" onclick="document.getElementById('token-modal').classList.remove('active')" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="token-modal-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
+    <div class="loading-box">
+      <span class="spinner" style="width:1.5rem;height:1.5rem;border-width:3px"></span>
+      <span id="loading-text">Loading…</span>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=5"></script>
+</body>
+</html>
