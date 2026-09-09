@@ -931,7 +931,7 @@
       // Wait for receipt
       const receipt = await waitForReceipt(txHash);
 
-      if (receipt.status === 1) {
+      if (receiptSucceeded(receipt)) {
         showTxStatus('success', 'Swap complete!');
         await handlePostSwap(receipt);
       } else {
@@ -950,6 +950,14 @@
       els.btnConfirmSwap.disabled = false;
       els.btnConfirmSwap.textContent = 'Confirm Swap';
     }
+  }
+
+  function receiptSucceeded(receipt) {
+    // Wallet providers return status hex ('0x1') while some paths give
+    // number 1; accept every success encoding so a mined swap is never
+    // misrecorded as FAILED.
+    const s = receipt && receipt.status;
+    return s === 1 || s === '0x1' || s === '0x01' || s === true;
   }
 
   function showTxStatus(type, title) {
