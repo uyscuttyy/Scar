@@ -137,6 +137,9 @@
       els.historyList = $('#history-list');
       els.historyEmpty = $('#history-empty');
 
+      // Specialist
+      els.decisionSpecialist = $('#decision-specialist');
+
       // Modals
       els.tokenModal = $('#token-modal');
       els.tokenModalList = $('#token-modal-list');
@@ -833,6 +836,81 @@
           await fetchQuoteAndEvaluate();
         });
       }
+    }
+
+    // Uncertain path: SAFER_TERMS with no blocking memory means Scar has
+    // high risk and no experience to ground it. Offer a specialist check.
+    // Advisory only: the result refines the suggestion, never authorizes.
+    els.decisionSpecialist.style.display = 'none';
+    els.decisionSpecialist.innerHTML = '';
+    if (decision.decision === 'SAFER_TERMS' && !decision.memory) {
+      const askRow = document.createElement('div');
+      askRow.style.marginTop = '0.75rem';
+      askRow.innerHTML = `<button id="btn-ask-specialist" class="btn btn-secondary" type="button">Ask a specialist agent</button>`;
+      els.decisionDetails.appendChild(askRow);
+      $('#btn-ask-specialist').addEventListener('click', () => askSpecialist(quote, decision));
+    }
+  }
+
+  async function askSpecialist(quote, decision) {
+    const box = els.decisionSpecialist;
+    box.style.display = 'block';
+    box.innerHTML = `<div class="memory-card"><div class="memory-meta"><span class="spinner"></span> Consulting specialist via Virtuals ACP…</div></div>`;
+    try {
+      const slip = quote.slippageBps || Math.round((1 - quote.minOutput / quote.expectedOutput) * 10000);
+      const res = await fetch(`${API}/consult`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wallet: state.wallet,
+          pair: `${state.fromToken.symbol}-${state.toToken.symbol}`,
+          direction: 'sell',
+          amount: parseFloat(state.fromAmount),
+          slippage_bps: slip,
+          impact_bps: quote.priceImpactBps || 0,
+          context: decision.message || ''
+        })
+      });
+      const out = await res.json();
+      if (!out.available) {
+        box.innerHTML = `
+          <h3>Specialist</h3>
+          <div class="memory-card">
+            <div class="memory-meta"><span>Unavailable: ${out.message || out.code || 'unknown'} Scar's decision stands.</span></div>
+          </div>`;
+        return;
+      }
+      const a = out.assessment || {};
+      const cap = a.recommended_max_amount;
+      const sugAmt = (decision.safer_suggestion && decision.safer_suggestion.amount) || 0;
+      const refined = (cap && cap > 0) ? (sugAmt ? Math.min(sugAmt, cap) : cap) : 0;
+      box.innerHTML = `
+        <h3>Specialist says</h3>
+        <div class="memory-card">
+          <div class="memory-header">
+            <span class="memory-badge ${(a.risk || 'unknown').toLowerCase()}">${a.risk || 'unknown'} risk</span>
+            <span class="memory-pair">${out.provider_name || out.provider || 'specialist'}</span>
+          </div>
+          <div class="memory-meta"><span>${a.rationale || 'No rationale returned.'}</span></div>
+          ${out.job_id ? `<div class="memory-meta"><span>ACP job ${out.job_id}</span></div>` : ''}
+          ${refined ? `<div style="margin-top:0.75rem"><button id="btn-try-refined" class="btn btn-secondary" type="button">Try ${fmtNum(refined)} ${state.fromToken.symbol} instead</button></div>` : ''}
+        </div>`;
+      const rb = $('#btn-try-refined');
+      if (rb) {
+        rb.addEventListener('click', async () => {
+          state.fromAmount = String(refined);
+          if (els.fromAmount) els.fromAmount.value = String(refined);
+          validateSwapForm();
+          showScreen('trade');
+          await fetchQuoteAndEvaluate();
+        });
+      }
+    } catch (e) {
+      box.innerHTML = `
+        <h3>Specialist</h3>
+        <div class="memory-card">
+          <div class="memory-meta"><span>Consultation failed: ${e.message || e}. Scar's decision stands.</span></div>
+        </div>`;
     }
   }
 

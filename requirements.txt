@@ -1,3 +1,6 @@
 fastapi
 uvicorn
 sibyl-memory-client==0.8.1
+virtuals-acp==0.3.23
+charset-normalizer==3.4.1
+frozenlist==1.7.0

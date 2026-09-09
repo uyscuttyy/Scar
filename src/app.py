@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import os, sys, json, time
 sys.path.insert(0, "/home/uyscutty/projects/scar/src")
 from engine import build_situation, evaluate, record_experience
+from specialist import consult as specialist_consult, status as specialist_status
 from sibyl_memory_client import MemoryClient
 import httpx
 from uniswap import get_quote as uniswap_get_quote, get_best_quote, get_spot_rate, encode_swap_call, encode_erc20_approve, encode_permit2_approve, get_fee_tier, USDC, WETH, CHAIN_ID, PERMIT2, SWAP_ROUTER_02
@@ -240,6 +241,33 @@ async def prepare_swap(req: SwapRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Swap preparation failed: {str(e)}")
+
+class ConsultRequest(BaseModel):
+    wallet: str
+    pair: str
+    direction: str = "sell"
+    amount: float = 0
+    slippage_bps: int = 0
+    impact_bps: int = 0
+    context: str = ""
+
+
+@app.get("/specialist/status")
+def get_specialist_status():
+    return specialist_status()
+
+
+@app.post("/consult")
+def consult_specialist(req: ConsultRequest):
+    """Ask a Virtuals ACP specialist for a risk assessment (sync, bounded).
+
+    Advisory only: the returned assessment never authorizes a trade by
+    itself. Unconfigured/failing specialist => explicit unavailable, and
+    Scar's deterministic decision stands."""
+    sit = build_situation(req.wallet, req.pair, req.direction,
+                          req.amount, req.slippage_bps, req.impact_bps)
+    return specialist_consult(sit, req.context)
+
 
 @app.get("/history")
 def get_history(wallet: str):

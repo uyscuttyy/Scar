@@ -203,19 +203,29 @@ def record_experience(memory_client, wallet: str, experience: dict) -> dict:
                             reason="pruned: lowest importance over cap")
                     except Exception:
                         break
-        # Supersede: a GOOD under previously-bad conditions retires blockers.
+        # Supersede: a GOOD that re-tests previously-bad conditions retires
+        # those blockers. Same pair+direction+bucket AND execution
+        # conditions at least as harsh as the bad memory; a small easy
+        # GOOD must never retire a large harsh FAILED.
         if exp.get("outcome") == "GOOD":
+            good_bucket = exp.get("amountBucket") or amount_bucket(exp.get("amount", 0))
+            good_slip = max(exp.get("slippageBps", 0) or 0,
+                            exp.get("impactBps", 0) or 0)
             for m in existing:
                 b = m.get("body") or {}
                 if (b.get("pair") == exp.get("pair")
                         and b.get("direction") == exp.get("direction")
                         and b.get("outcome") in ("BAD", "FAILED")
-                        and not b.get("supersededBy")):
-                    b["supersededBy"] = exp.get("txHash") or exp.get("ts")
-                    try:
-                        memory_client.set_entity(CATEGORY, m["name"], b)
-                    except Exception:
-                        pass
+                        and not b.get("supersededBy")
+                        and b.get("amountBucket") == good_bucket):
+                    mem_slip = (mem_eff_slip(b)
+                                if ("slippageBps" in b or "impactBps" in b) else 999)
+                    if good_slip >= mem_slip - SIM_TOL_BPS:
+                        b["supersededBy"] = exp.get("txHash") or exp.get("ts")
+                        try:
+                            memory_client.set_entity(CATEGORY, m["name"], b)
+                        except Exception:
+                            pass
     except Exception as e:
         result["stored"] = False
         result["fail_closed"] = True
