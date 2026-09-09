@@ -1,10 +1,9 @@
-# SCAR Memory Design (researched against sibyl-memory-client 0.8.1)
+# SCAR Memory Design (as built, sibyl-memory-client 0.8.1)
 
 ## Tenancy
-- `tenant_id` = lowercase wallet address (`0x...`). Safe: identifier rules
-  reject only control chars, `..`, and `< > | ; " \`` — none appear in addresses.
+- `tenant_id` = lowercase wallet address (`0x...`).
 - Every table carries `tenant_id`; every SDK query filters on it.
-  Verified by smoke test (0xAAA vs 0xBBB fully isolated).
+  Verified: wallet B unaffected by wallet A's BAD memory.
 - New wallet => new tenant partition on first write. Returning wallet =>
   `set_tenant` + existing rows returned. Memory belongs to the wallet.
 
@@ -17,38 +16,40 @@
 - FTS5 `search()` is keyword retrieval aid only, never the decider.
 - No invented fields: missing chain data is omitted, never fabricated.
 
-## Importance scoring (deterministic, in engine.py — Sibyl has no ranker)
+## Importance scoring (deterministic, in engine.py: Sibyl has no ranker)
 Score from available evidence only:
 - FAILED +50, BAD +40, GOOD +5; slippage>=500bps +25, >=200 +10;
   repeated same-pair bad +20; recency decay -1 per 30 days (floor kept
   if it still changed a decision); decision-changing memory pinned.
 - Store threshold: importance >= 30. Below => journal only, not an entity.
+  Verified: GOOD at 50/15bps scored 25, journaled, not stored.
 
 ## Condition-aware matching (Sibyl has no similarity engine)
 - Candidate filter: same pair + same direction + same amountBucket.
-- Similarity: |currentSlip - memSlip| <= 150bps AND currentSlip >= 200bps
-  AND memory outcome in (BAD, FAILED) AND not superseded AND not decayed.
-- Same pair with better conditions (slippage below 200bps or 150bps+
-  better than the bad memory) => ALLOW. Never block on pair alone.
+- Similarity: |currentSlip - memSlip| <= 150bps via
+  `eff_slip >= mem_slip - 150` AND current effective signal >= 400bps
+  AND memory outcome in (BAD, FAILED) AND not superseded.
+- Same pair with better conditions => ALLOW. Never block on pair alone.
+  Verified: 50 USDC BAD-memory wallet still ALLOWs at 50/15bps.
 
-## Decay / pruning (Sibyl has no TTL; Scar manages its set)
-- Keep smallest useful set: on write, if set > 50 entities, archive lowest
-  importance first (recoverable `archive_entity`), never hard-delete except
-  via explicit user/test delete.
-- Supersede: a newer GOOD under previously-bad conditions marks the old
-  memory `supersededBy` (entity update) so it stops blocking.
-- Age is one signal only: old + contradicted/redundant/never-deciding =>
-  archive; old + still-deciding => keep.
+## Safer suggestions (in engine.py, never hardcoded per trade)
+- `suggested_safer_amount`: step down one bucket (large->999,
+  medium->99, small->9, dust->half). Smaller size escapes the recorded
+  bucket and genuinely lowers price impact.
+- Verified: suggestion 9.0 for a denied 50-USDC trade re-evaluates to
+  ALLOW (different bucket, low signal).
+
+## Supersede (fixed this build: was over-broad)
+- Only a GOOD that re-tests the bad conditions (same pair+direction+
+  bucket, GOOD signal >= bad signal - 150bps) sets `supersededBy`.
+- Verified: dust-bucket easy GOOD leaves a small-bucket FAILED blocker
+  intact (still DENY); same-bucket harsh GOOD retires it (blocker gone).
+- Old + contradicted/redundant/never-deciding => archive; old +
+  still-deciding => keep (prune keeps max 50, lowest importance first).
 
 ## Failure semantics (load-bearing)
-- Required ops: pre-swap retrieval (`list_entities`/`search`) and post-swap
-  write (`set_entity`/`write_event`). Any raise (`StorageError`,
-  `CapExceededError`, `TierVerificationError`, open failure, DB file
-  missing/unreadable) => 503 SIBYL_UNAVAILABLE => UI refuses swap.
-- No fallback store. Deletion test: deleting the wallet's entities (UI
-  test control or `delete_entity`) makes the next decision path fail
-  closed until memory is writable/readable again.
-- Known limits: 5MB free-tier cap (`CapExceededError`) counts as
-  unavailable; `learn()`/`lint()` gated (`TierGateError`) and unused;
-  FTS tenant filter is post-filter (audit-noted) — isolation verified
-  empirically and relied upon as implemented, not as index guarantee.
+- Required ops: pre-swap retrieval (`list_entities`) and post-swap
+  write (`set_entity`/`write_event`). Any raise or open failure =>
+  DENY SIBYL_UNAVAILABLE, zero transaction. Verified with broken store.
+- No fallback store. Deleting the DB file makes health report
+  unavailable and decisions fail closed.

@@ -1,63 +1,53 @@
-# SCAR handoff (hostile audit)
+# SCAR handoff (current state)
 
-## What was repaired/rebuilt
-- Previous agent: 6 files, uninstallable (no venv, fastapi/sibyl missing),
-  /health 404 (static mount registered before API routes), write-via-GET,
-  engine without importance/buckets/supersede/prune, no docs beyond two md.
-- This pass: project `.venv` (sibyl 0.8.1, fastapi, uvicorn); mount order
-  fixed; engine rewritten per memory.md; POST /record added; journal
-  always written; prune + supersede implemented; prd/project-plan/handoff
-  written.
+## What Scar is now
+A 5-screen memory-aware swap agent on Base Sepolia: Home, Trade, SCAR
+Decision, Your Scars, Settings. Real Uniswap v3 quotes, deterministic
+memory-gated decisions, wallet-signed execution, automatic post-trade
+learning to wallet-scoped Sibyl memory, plus config-gated Virtuals ACP
+specialist consultation (advisory only).
 
 ## What actually works (executed, not claimed)
-- `POST /record` BAD 480bps -> importance 50, stored + journaled.
-- Similar 450bps -> DENY citing memory; better 80bps -> ALLOW.
-- Other wallet same conditions -> SAFER_TERMS (isolation proven).
-- Restart -> DENY persists (SQLite durable).
-- Broken store -> DENY SIBYL_UNAVAILABLE, zero tx.
-- /health, /quote_ref, / return 200. Static page has no JS.
+- Live QuoterV2 quotes + measured price impact (POST /quote, verified).
+- ALLOW/DENY/SAFER_TERMS with real conditions; DENY cites blocking memory.
+- `/swap` server-side decision gate: bypass POST returns 403, zero calldata.
+- Safer suggestions computed from bucket logic; re-evaluation reaches ALLOW.
+- Fresh-session proof: ALLOW->FAILED stored -> restart -> DENY citing
+  prior txHash; isolation holds; GOOD journal-only (importance 25).
+- Supersede fixed: easy GOOD no longer retires harsh FAILED (verified
+  both directions).
+- Fail-closed: broken store -> DENY SIBYL_UNAVAILABLE, zero tx (verified).
+- Calldata byte-identical to a real mined swap (0x04e45aaf path).
+- ACP discovery live (HTTP 200); /consult returns explicit unavailable
+  without credentials; no faked assessments anywhere.
+- /health, /quote_ref, /history, /specialist/status return 200.
 
 ## Blockers / not done
-- No wallet-connect UI; no live Uniswap quote call; no signed tx path;
-  no on-chain history reader; no production build step (none needed yet).
-- `requirements.txt` lists web3 but it is not installed or imported.
-
-## 2026-09-08 update (quote path fixed, UI built)
-- Real QuoterV2 quotes live: struct encoding fixed, best-tier routing,
-  measured price impact from slot0 spot. 50 USDC -> 0.0254 WETH, fee
-  500, impact 387bps (verified via POST /quote).
-- Decision engine now uses max(slippage, impact) as the condition
-  signal; old slippage-only memories still evaluate identically
-  (impact defaults 0).
-- POST /swap builds real SwapRouter02 calldata (selector 0x04e45aaf).
-  SwapRouter struct encoding unverified until a real wallet signing test.
-- Frontend built: static/index.html + css/app.css + js/app.js served at
-  / with /js and /css paths fixed. Eval/record/history field names match.
-- Verified: record BAD -> DENY similar, ALLOW better, isolation,
-  restart persistence, fail-closed on broken store. Browser test with a
-  real wallet + signed tx still pending.
-
-## 2026-09-08 E2E PROOF (real Base Sepolia txs, wallet 0x9A67…8123)
-- Approval fix (traced): this SwapRouter02 pulls input via direct
-  transferFrom with the router as spender — wallet->router ERC20
-  approval is required, Permit2 alone reverts (STF). /swap now returns
-  `approval` calldata; frontend checks allowance and prompts approval
-  first. e2e_swap.py / e2e_fail.py are the runnable proofs.
-- GOOD swap: 1 USDC -> WETH, ALLOW -> approve + exactInputSingle mined
-  status 1, block 46563978,
-  tx 0x1bcbd67b57a050ff294369570834e7f3e151286c7903b00ae4001b35fb03b9f5.
-  Recorded GOOD importance 5 -> journal only (correct: not stored).
-- FAILED swap: rigged min (2x quote) reverted on-chain status 0, block
-  46563993,
-  tx 0x5e33e4da26d9e0c13acb27f98dd8a05696c6570045880fbcc8319f60835aae8c.
-  Recorded FAILED importance 50 -> stored.
-- Condition-aware: same-bucket bad conditions -> DENY citing the real
-  txHash, zero tx; same pair good conditions -> ALLOW. DENY survives
-  server restart. History returns the FAILED memory.
+- Live wallet signing: needs a funded Base Sepolia wallet. Everything up
+  to the signature is verified; the signature-to-receipt leg is not.
+- Live ACP job: needs registered-agent credentials
+  (VIRTUALS_AGENT_WALLET_ADDRESS, VIRTUALS_WALLET_PRIVATE_KEY,
+  VIRTUALS_ENTITY_ID) plus fare funding. Discovery and the full buyer
+  code path are real; no job has been executed.
+- Browser-console check: harness daemon was down, so UI runtime is
+  statically verified (node --check, ID cross-check, served 200s), not
+  live-clicked.
+- No automated test suite, linter, or CI (documented, not built).
 
 ## Run
 SCAR_DB=/tmp/scar_memory.db .venv/bin/python -m uvicorn src.app:app \
   --host 127.0.0.1 --port 8000
+Requires: .venv with requirements.txt (uv pip install -r requirements.txt;
+note charset-normalizer==3.4.1 / frozenlist==1.7.0 pins work around bad
+cp314 wheels). No frontend build step.
+
+## Env (optional)
+VIRTUALS_AGENT_WALLET_ADDRESS, VIRTUALS_WALLET_PRIVATE_KEY,
+VIRTUALS_ENTITY_ID, VIRTUALS_SPECIALIST_KEYWORD,
+VIRTUALS_PROVIDER_ADDRESS, VIRTUALS_MAX_FARE_USDC,
+VIRTUALS_CONSULT_TIMEOUT_S, BASE_SEPOLIA_RPC, SCAR_DB.
 
 ## Do not trust without re-running
-Re-run the curl sequence in project-plan phases 8-13 before any demo.
+Re-run the Phase 2/4 curl sequences (ALLOW, record BAD, DENY, bypass
+403, restart, DENY-cites-memory) before any demo. For the demo you need
+a funded Base Sepolia wallet in the browser.
