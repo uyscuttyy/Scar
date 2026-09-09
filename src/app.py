@@ -46,6 +46,19 @@ class SwapRequest(BaseModel):
     amountDecimals: int = 18
     slippageBps: int = 200
     quote: dict = {}
+    pair: str = ""
+    direction: str = "sell"
+
+
+def _pair_for(from_token: str, to_token: str) -> str:
+    def sym(a: str) -> str:
+        a = (a or "").lower()
+        if a == USDC.lower():
+            return "USDC"
+        if a == WETH.lower():
+            return "WETH"
+        return (a[:6] + "…" + a[-4:]) if a else "?"
+    return f"{sym(from_token)}-{sym(to_token)}"
 
 class EvaluateRequest(BaseModel):
     wallet: str
@@ -150,15 +163,45 @@ def record(r: Record):
 
 @app.post("/swap")
 async def prepare_swap(req: SwapRequest):
-    """Prepare swap transaction calldata for SwapRouter02."""
+    """Prepare swap transaction calldata for SwapRouter02.
+
+    Decision-gated: Scar re-evaluates the live situation (Sibyl read)
+    before building ANY calldata. Non-ALLOW yields 403 with the
+    decision and zero transaction data, so no frontend bypass can
+    submit a denied trade."""
+    try:
+        c = MemoryClient.local(DB_PATH, tenant_id=req.wallet.lower())
+    except Exception as e:
+        raise HTTPException(status_code=503, detail={"decision": "DENY", "code": "SIBYL_UNAVAILABLE", "message": "Sibyl unavailable — no swap.", "tx_submitted": False, "error": str(e)})
+    pair = req.pair or _pair_for(req.fromToken, req.toToken)
     try:
         amount_wei = int(req.amount * (10 ** req.amountDecimals))
 
-        # Calculate minimum output from slippage
-        # Need to get fresh quote for exact amount out
+        # Fresh live quote first, so the gate below sees live conditions
+        # instead of trusting client-supplied numbers.
         quote_data = await get_best_quote(req.fromToken, req.toToken, amount_wei)
         fee = quote_data["fee"]
         amount_out = quote_data["amountOut"]
+
+        # Live price impact: quoted rate vs pool slot0 spot (same as /quote).
+        # Unreadable spot => impact omitted (0 signal), never fabricated.
+        to_decimals = 6 if req.toToken.lower() == USDC.lower() else 18
+        from_decimals = 6 if req.fromToken.lower() == USDC.lower() else 18
+        live_impact = 0
+        try:
+            expected_rate = amount_out / amount_wei * (10 ** from_decimals) / (10 ** to_decimals) if amount_wei > 0 else 0
+            spot = await get_spot_rate(req.fromToken, req.toToken,
+                                       req.amountDecimals, to_decimals, fee)
+            if spot and spot > 0 and expected_rate > 0:
+                live_impact = int(abs(expected_rate - spot) / spot * 10000)
+        except Exception:
+            live_impact = 0
+
+        gate = evaluate(c, build_situation(req.wallet, pair, req.direction or "sell",
+                                           req.amount, req.slippageBps, live_impact))
+        if gate.get("decision") != "ALLOW":
+            raise HTTPException(status_code=403, detail={**gate, "wallet_scoped": req.wallet.lower()})
+
         amount_out_min = int(amount_out * (1 - req.slippageBps / 10000))
 
         # Encode swap call

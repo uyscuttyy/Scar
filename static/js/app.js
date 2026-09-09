@@ -52,7 +52,7 @@
     currentDecision: null,
     currentTxHash: null,
     // UI
-    activeScreen: 'connect',
+    activeScreen: 'home',
     loading: false,
     error: null
   };
@@ -66,56 +66,86 @@
   function $$(sel, root = document) { return [...root.querySelectorAll(sel)]; }
 
   function cacheElements() {
-    // Screens
-    els.screenConnect = $('#screen-connect');
-    els.screenSwap = $('#screen-swap');
-    els.screenDecision = $('#screen-decision');
-    els.screenHistory = $('#screen-history');
+      // Screens
+      els.screenHome = $('#screen-home');
+      els.screenTrade = $('#screen-trade');
+      els.screenDecision = $('#screen-decision');
+      els.screenScars = $('#screen-scars');
+      els.screenSettings = $('#screen-settings');
 
-    // Connect
-    els.btnConnect = $('#btn-connect');
-    els.walletDisplay = $('#wallet-display');
-    els.walletAddress = $('#wallet-address');
-    els.walletChain = $('#wallet-chain');
-    els.btnDisconnect = $('#btn-disconnect');
+      // Tabs
+      els.tabHome = $('#tab-home');
+      els.tabTrade = $('#tab-trade');
+      els.tabScars = $('#tab-scars');
+      els.tabSettings = $('#tab-settings');
 
-    // Swap
-    els.fromAmount = $('#from-amount');
-    els.fromTokenBtn = $('#from-token-btn');
-    els.toTokenBtn = $('#to-token-btn');
-    els.swapArrow = $('#swap-arrow');
-    els.btnReview = $('#btn-review');
-    els.quoteLoading = $('#quote-loading');
-    els.quoteError = $('#quote-error');
+      // Wallet displays (one per screen)
+      els.homeWalletDisplay = $('#home-wallet-display');
+      els.homeWalletAddress = $('#home-wallet-address');
+      els.homeWalletChain = $('#home-wallet-chain');
+      els.homeBtnDisconnect = $('#home-btn-disconnect');
+      els.homeBtnConnect = $('#home-btn-connect');
 
-    // Decision
-    els.decisionBanner = $('#decision-banner');
-    els.decisionIcon = $('#decision-icon');
-    els.decisionTitle = $('#decision-title');
-    els.decisionMessage = $('#decision-message');
-    els.decisionDetails = $('#decision-details');
-    els.decisionMemory = $('#decision-memory');
-    els.btnConfirmSwap = $('#btn-confirm-swap');
-    els.btnBackToSwap = $('#btn-back-to-swap');
-    els.txStatus = $('#tx-status');
+      els.tradeWalletDisplay = $('#trade-wallet-display');
+      els.tradeWalletAddress = $('#trade-wallet-address');
+      els.tradeWalletChain = $('#trade-wallet-chain');
+      els.tradeBtnDisconnect = $('#trade-btn-disconnect');
 
-    // History
-    els.historyList = $('#history-list');
-    els.historyEmpty = $('#history-empty');
+      els.decisionWalletDisplay = $('#wallet-display-decision');
+      els.decisionWalletAddress = $('#wallet-address-decision');
+      els.decisionWalletChain = $('#wallet-chain-decision');
+      els.decisionBtnDisconnect = $('#btn-disconnect-decision');
 
-    // Modals
-    els.tokenModal = $('#token-modal');
-    els.tokenModalList = $('#token-modal-list');
-    els.tokenModalTitle = $('#token-modal-title');
+      els.scarsWalletDisplay = $('#wallet-display-history');
+      els.scarsWalletAddress = $('#wallet-address-history');
+      els.scarsWalletChain = $('#wallet-chain-history');
+      els.scarsBtnDisconnect = $('#btn-disconnect-history');
 
-    // Global
-    els.loadingOverlay = $('#loading-overlay');
-    els.loadingText = $('#loading-text');
-    els.globalError = $('#global-error');
+      els.settingsWalletDisplay = $('#wallet-display-settings');
+      els.settingsWalletAddress = $('#wallet-address-settings');
+      els.settingsWalletChain = $('#wallet-chain-settings');
+      els.settingsBtnDisconnect = $('#btn-disconnect-settings');
 
-    // Tabs
-    els.tabSwap = $('#tab-swap');
-    els.tabHistory = $('#tab-history');
+      // Home screen elements
+      els.homeMeaningfulExperiences = $('#home-meaningful-experiences');
+      els.homeAvoidedTrades = $('#home-avoided-trades');
+      els.homeRecentExperience = $('#home-recent-experience');
+      els.homeBtnStartTrade = $('#home-btn-start-trade');
+      els.homeEmptyState = $('#home-empty-state');
+
+      // Trade screen elements
+      els.fromAmount = $('#from-amount');
+      els.fromTokenBtn = $('#from-token-btn');
+      els.toTokenBtn = $('#to-token-btn');
+      els.swapArrow = $('#swap-arrow');
+      els.btnReview = $('#btn-review');
+      els.quoteLoading = $('#quote-loading');
+      els.quoteError = $('#quote-error');
+
+      // Decision screen elements
+      els.decisionBanner = $('#decision-banner');
+      els.decisionIcon = $('#decision-icon');
+      els.decisionTitle = $('#decision-title');
+      els.decisionMessage = $('#decision-message');
+      els.decisionDetails = $('#decision-details');
+      els.decisionMemory = $('#decision-memory');
+      els.btnConfirmSwap = $('#btn-confirm-swap');
+      els.btnBackToSwap = $('#btn-back-to-swap');
+      els.txStatus = $('#tx-status');
+
+      // Scars screen elements
+      els.historyList = $('#history-list');
+      els.historyEmpty = $('#history-empty');
+
+      // Modals
+      els.tokenModal = $('#token-modal');
+      els.tokenModalList = $('#token-modal-list');
+      els.tokenModalTitle = $('#token-modal-title');
+
+      // Global
+      els.loadingOverlay = $('#loading-overlay');
+      els.loadingText = $('#loading-text');
+      els.globalError = $('#global-error');
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -159,12 +189,127 @@
     $(`#screen-${name}`)?.classList.add('active');
     $$('.tab').forEach(t => t.classList.remove('active'));
     $(`#tab-${name}`)?.classList.add('active');
+
+    // Update wallet displays on all screens when wallet state changes
+    updateAllWalletDisplays();
+
+    // Load per-screen real data (fire and forget; each loader guards on wallet)
+    if (name === 'home') loadHomeStats();
+    if (name === 'scars') loadHistory();
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // Home screen: real stats from Sibyl, never hardcoded
+  // ──────────────────────────────────────────────────────────────
+  async function loadHomeStats() {
+    if (!state.wallet) {
+      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Connect a wallet to see your scars.';
+      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
+      if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
+      if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/history?wallet=${state.wallet}`);
+      if (!res.ok) throw new Error('History fetch failed');
+      const data = await res.json();
+      const memories = data.memories || [];
+      if (!memories.length) {
+        if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'No scars yet.';
+        if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
+        if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
+        if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
+        return;
+      }
+      if (els.homeEmptyState) els.homeEmptyState.style.display = 'none';
+      const blockers = memories.filter(m => {
+        const o = (m.body || {}).outcome;
+        return o === 'BAD' || o === 'FAILED';
+      });
+      const recent = [...memories].sort((a, b) =>
+        String((b.body || {}).ts || '').localeCompare(String((a.body || {}).ts || '')))[0];
+      const rb = (recent && recent.body) || {};
+      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent =
+        `${memories.length} meaningful experience${memories.length === 1 ? '' : 's'} remembered.`;
+      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent =
+        `${blockers.length} poor-outcome trade${blockers.length === 1 ? '' : 's'} Scar will help you avoid repeating.`;
+      if (els.homeRecentExperience) els.homeRecentExperience.textContent =
+        `Most recent: ${rb.pair || '—'} ${rb.outcome || ''} (${fmtDate(rb.ts)}).`;
+    } catch (e) {
+      console.warn('Home stats load failed:', e);
+      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Could not load memories.';
+      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
+      if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
+    }
   }
 
   function setLoading(on, text = 'Loading…') {
-    state.loading = on;
-    els.loadingOverlay.classList.toggle('active', on);
-    if (on) els.loadingText.textContent = text;
+      state.loading = on;
+      els.loadingOverlay.classList.toggle('active', on);
+      if (on) els.loadingText.textContent = text;
+  }
+
+  function updateAllWalletDisplays() {
+      if (!state.wallet) {
+          // Hide all wallet displays
+          if (els.homeWalletDisplay) els.homeWalletDisplay.style.display = 'none';
+          if (els.homeBtnConnect) els.homeBtnConnect.style.display = 'inline-flex';
+          if (els.tradeWalletDisplay) els.tradeWalletDisplay.style.display = 'none';
+          if (els.decisionWalletDisplay) els.decisionWalletDisplay.style.display = 'none';
+          if (els.scarsWalletDisplay) els.scarsWalletDisplay.style.display = 'none';
+          if (els.settingsWalletDisplay) els.settingsWalletDisplay.style.display = 'none';
+          return;
+      }
+      // Show wallet displays and hide connect button
+      const address = fmtAddr(state.wallet);
+      const chainText = state.chainId === CHAIN_ID ? 'Base Sepolia ✓' : `Wrong network (${state.chainId}) — switch to Base Sepolia`;
+      const chainColor = state.chainId === CHAIN_ID ? 'var(--success)' : 'var(--danger)';
+
+      // Home
+      if (els.homeWalletAddress) els.homeWalletAddress.textContent = address;
+      if (els.homeWalletChain) {
+          els.homeWalletChain.textContent = chainText;
+          els.homeWalletChain.style.color = chainColor;
+      }
+      if (els.homeWalletDisplay) els.homeWalletDisplay.style.display = 'flex';
+      if (els.homeBtnConnect) els.homeBtnConnect.style.display = 'none';
+      if (els.homeBtnDisconnect) els.homeBtnDisconnect.style.display = 'inline-flex';
+
+      // Trade
+      if (els.tradeWalletAddress) els.tradeWalletAddress.textContent = address;
+      if (els.tradeWalletChain) {
+          els.tradeWalletChain.textContent = chainText;
+          els.tradeWalletChain.style.color = chainColor;
+      }
+      if (els.tradeWalletDisplay) els.tradeWalletDisplay.style.display = 'flex';
+      if (els.tradeBtnDisconnect) els.tradeBtnDisconnect.style.display = 'inline-flex';
+
+      // Decision
+      if (els.decisionWalletAddress) els.decisionWalletAddress.textContent = address;
+      if (els.decisionWalletChain) {
+          els.decisionWalletChain.textContent = chainText;
+          els.decisionWalletChain.style.color = chainColor;
+      }
+      if (els.decisionWalletDisplay) els.decisionWalletDisplay.style.display = 'flex';
+      if (els.decisionBtnDisconnect) els.decisionBtnDisconnect.style.display = 'inline-flex';
+
+      // Scars
+      if (els.scarsWalletAddress) els.scarsWalletAddress.textContent = address;
+      if (els.scarsWalletChain) {
+          els.scarsWalletChain.textContent = chainText;
+          els.scarsWalletChain.style.color = chainColor;
+      }
+      if (els.scarsWalletDisplay) els.scarsWalletDisplay.style.display = 'flex';
+      if (els.scarsBtnDisconnect) els.scarsBtnDisconnect.style.display = 'inline-flex';
+
+      // Settings
+      if (els.settingsWalletAddress) els.settingsWalletAddress.textContent = address;
+      if (els.settingsWalletChain) {
+          els.settingsWalletChain.textContent = chainText;
+          els.settingsWalletChain.style.color = chainColor;
+      }
+      if (els.settingsWalletDisplay) els.settingsWalletDisplay.style.display = 'flex';
+      if (els.settingsBtnDisconnect) els.settingsBtnDisconnect.style.display = 'inline-flex';
   }
 
   function setGlobalError(msg) {
@@ -206,7 +351,10 @@
 
   function renderWalletPicker() {
     const box = document.getElementById('wallet-picker');
-    if (!box) return;
+    if (!box) {
+      // No picker slot on this layout; the Home connect button is the default path.
+      return;
+    }
     box.innerHTML = '';
     if (!discovered.length) return; // legacy single-button path
     discovered.forEach(({ info, provider }) => {
@@ -220,7 +368,7 @@
       });
       box.appendChild(b);
     });
-    if (els.btnConnect) els.btnConnect.textContent = 'Connect (default wallet)';
+    if (els.homeBtnConnect && discovered.length) els.homeBtnConnect.textContent = 'Connect (default wallet)';
   }
 
   function showProviderInfo() {
@@ -252,8 +400,10 @@
         renderWalletPicker();
         if (typeof eth() === 'undefined' && !discovered.length) {
           setGlobalError('No wallet detected. Install MetaMask, Coinbase Wallet, or another Web3 wallet.');
-          els.btnConnect.disabled = true;
-          els.btnConnect.textContent = 'Wallet Required';
+          if (els.homeBtnConnect) {
+            els.homeBtnConnect.disabled = true;
+            els.homeBtnConnect.textContent = 'Wallet Required';
+          }
         }
       }, 1500);
       return;
@@ -343,20 +493,14 @@
     const chainId = await eth().request({ method: 'eth_chainId' });
     state.chainId = parseInt(chainId, 16);
 
-    // Update UI
-    els.walletAddress.textContent = fmtAddr(address);
-    els.walletChain.textContent = state.chainId === CHAIN_ID
-      ? 'Base Sepolia ✓'
-      : `Wrong network (${state.chainId}) — switch to Base Sepolia`;
-    els.walletChain.style.color = state.chainId === CHAIN_ID ? 'var(--success)' : 'var(--danger)';
-    els.walletDisplay.style.display = 'flex';
-    els.btnConnect.style.display = 'none';
+    // Update every screen's wallet display
+    updateAllWalletDisplays();
 
     // Fetch balances
     await fetchBalances();
 
-    // Show swap screen
-    showScreen('swap');
+    // Show trade screen
+    showScreen('trade');
   }
 
   async function disconnectWallet() {
@@ -369,10 +513,9 @@
     state.currentQuote = null;
     state.currentDecision = null;
 
-    els.walletDisplay.style.display = 'none';
-    els.btnConnect.style.display = 'inline-flex';
-    els.fromAmount.value = '';
-    showScreen('connect');
+    if (els.fromAmount) els.fromAmount.value = '';
+    updateAllWalletDisplays();
+    showScreen('home');
   }
 
   async function fetchBalances() {
@@ -585,7 +728,7 @@
       state.currentDecision = decision;
 
       // Show decision screen
-      renderDecision(quote, decision);
+      renderDecision(quote, decision, amount);
       showScreen('decision');
     } catch (e) {
       console.error('Quote/eval failed:', e);
@@ -598,7 +741,7 @@
     }
   }
 
-  function renderDecision(quote, decision) {
+  function renderDecision(quote, decision, amount) {
     // Banner
     els.decisionBanner.className = 'decision-banner ' + decision.decision.toLowerCase();
 
@@ -661,6 +804,36 @@
       els.btnConfirmSwap.style.display = 'none';
     }
     els.txStatus.style.display = 'none';
+
+    // DENY / SAFER_TERMS: explicit zero-transaction guarantee + safer path.
+    // The "Try safer terms" button applies the server-computed suggestion,
+    // then runs a completely fresh quote → situation → Sibyl → evaluation.
+    const sug = decision.safer_suggestion;
+    let extra = '';
+    if (decision.decision === 'DENY' || decision.decision === 'SAFER_TERMS') {
+      extra += `<div class="detail-row"><span class="detail-label">Transaction submitted</span><span class="detail-value">None — zero transactions</span></div>`;
+    }
+    if (sug && sug.amount > 0) {
+      extra += `
+        <div class="detail-row"><span class="detail-label">Safer size</span><span class="detail-value highlight">${fmtNum(sug.amount)} ${state.fromToken.symbol}</span></div>
+        <div class="detail-row"><span class="detail-label">Why safer</span><span class="detail-value" style="font-family:inherit">${sug.reason || ''}</span></div>
+        <div style="margin-top:0.75rem">
+          <button id="btn-try-safer" class="btn btn-secondary" type="button">Try ${fmtNum(sug.amount)} ${state.fromToken.symbol} instead</button>
+        </div>`;
+    }
+    if (extra) {
+      els.decisionDetails.innerHTML += extra;
+      const tryBtn = $('#btn-try-safer');
+      if (tryBtn) {
+        tryBtn.addEventListener('click', async () => {
+          state.fromAmount = String(sug.amount);
+          if (els.fromAmount) els.fromAmount.value = String(sug.amount);
+          validateSwapForm();
+          showScreen('trade');
+          await fetchQuoteAndEvaluate();
+        });
+      }
+    }
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -693,7 +866,16 @@
 
       if (!swapRes.ok) {
         const err = await swapRes.json().catch(() => ({}));
-        throw new Error(err.detail || 'Swap preparation failed');
+        const d = err.detail || {};
+        // 403 = server-side decision gate refused (DENY/SAFER_TERMS/SIBYL_UNAVAILABLE).
+        // Surface Scar's own message; no calldata was returned, nothing to sign.
+        if (swapRes.status === 403 && d.decision) {
+          state.currentDecision = d;
+          renderDecision(state.currentQuote, d, parseFloat(state.fromAmount));
+          showTxStatus('error', `Blocked by Scar: ${d.message || d.decision}. No transaction submitted.`);
+          return;
+        }
+        throw new Error((d && d.message) || err.detail || 'Swap preparation failed');
       }
 
       const swapData = await swapRes.json();
@@ -878,8 +1060,12 @@
   // ──────────────────────────────────────────────────────────────
   function bindEvents() {
     // Wallet
-    els.btnConnect.addEventListener('click', connectWallet);
-    els.btnDisconnect.addEventListener('click', disconnectWallet);
+    els.homeBtnConnect.addEventListener('click', connectWallet);
+    els.homeBtnDisconnect.addEventListener('click', disconnectWallet);
+    els.tradeBtnDisconnect.addEventListener('click', disconnectWallet);
+    els.decisionBtnDisconnect.addEventListener('click', disconnectWallet);
+    els.scarsBtnDisconnect.addEventListener('click', disconnectWallet);
+    els.settingsBtnDisconnect.addEventListener('click', disconnectWallet);
 
     // Token selection
     els.fromTokenBtn.addEventListener('click', () => openTokenModal('from'));
@@ -902,14 +1088,16 @@
 
     // Decision actions
     els.btnConfirmSwap.addEventListener('click', confirmSwap);
-    els.btnBackToSwap.addEventListener('click', () => showScreen('swap'));
+    els.btnBackToSwap.addEventListener('click', () => showScreen('trade'));
+
+    // Home CTA
+    els.homeBtnStartTrade.addEventListener('click', () => showScreen('trade'));
 
     // Tabs
-    els.tabSwap.addEventListener('click', () => showScreen('swap'));
-    els.tabHistory.addEventListener('click', async () => {
-      showScreen('history');
-      await loadHistory();
-    });
+    els.tabHome.addEventListener('click', () => showScreen('home'));
+    els.tabTrade.addEventListener('click', () => showScreen('trade'));
+    els.tabScars.addEventListener('click', () => showScreen('scars'));
+    els.tabSettings.addEventListener('click', () => showScreen('settings'));
 
     // Wallet events — attach to whichever provider answers.
     const evProvider = eth();

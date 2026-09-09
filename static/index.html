@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SCAR — Memory-Aware Swap</title>
-  <link rel="stylesheet" href="/css/app.css?v=3">
+  <link rel="stylesheet" href="/css/app.css?v=4">
 </head>
 <body>
   <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
@@ -14,37 +14,58 @@
     <header style="display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem">
       <h1>SCAR</h1>
       <nav class="tabs" role="tablist">
-        <button id="tab-swap" class="tab active" role="tab" aria-selected="true">Swap</button>
-        <button id="tab-history" class="tab" role="tab" aria-selected="false">Your Scars</button>
+        <button id="tab-home" class="tab active" role="tab" aria-selected="true">Home</button>
+        <button id="tab-trade" class="tab" role="tab" aria-selected="false">Trade</button>
+        <button id="tab-scars" class="tab" role="tab" aria-selected="false">Your Scars</button>
+        <button id="tab-settings" class="tab" role="tab" aria-selected="false">Settings</button>
       </nav>
     </header>
 
-    <!-- Screen: Connect -->
-    <section id="screen-connect" class="screen active" aria-labelledby="connect-title">
+    <!-- Screen: Home -->
+    <section id="screen-home" class="screen active" aria-labelledby="home-title">
       <div class="card" style="max-width:32rem">
-        <h2 id="connect-title">Your memory-aware swap agent.</h2>
-        <p style="color:var(--muted);margin:0.5rem 0 1.5rem">SCAR remembers the conditions behind your bad swaps and won't silently let you repeat them.</p>
-        <button id="btn-connect" class="btn" style="width:100%">
+        <h2 id="home-title">Scar</h2>
+        <p style="color:var(--muted);margin:0.5rem 0 1.5rem">
+          Your trading agent that remembers.
+        </p>
+        <p style="color:var(--muted);margin:0.5rem 0 1.5rem">
+          Scar remembers what happened in your previous trades and uses those experiences before you make your next one.
+        </p>
+        <div id="home-wallet-display" class="wallet-display" style="display:none;margin-bottom:1.5rem">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+          <span id="home-wallet-address" class="wallet-address"></span>
+          <span id="home-wallet-chain" class="wallet-chain"></span>
+          <button id="home-btn-disconnect" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+        </div>
+        <button id="home-btn-connect" class="btn" style="width:100%;display:none">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
           Connect Wallet
         </button>
         <div id="wallet-picker"></div>
-        <p class="note">Supports MetaMask, Coinbase Wallet, and any WalletConnect-compatible wallet on Base Sepolia.</p>
         <p id="provider-info" class="note" style="font-family:monospace"></p>
+        <div id="home-intro-actions" style="margin-top:1.5rem">
+          <p id="home-meaningful-experiences" class="note"> — </p>
+          <p id="home-avoided-trades" class="note"> — </p>
+          <p id="home-recent-experience" class="note"> — </p>
+          <button id="home-btn-start-trade" class="btn" style="width:100%;margin-top:1rem">Start a trade</button>
+        </div>
+        <p class="note" id="home-empty-state" style="display:none;margin-top:1rem">
+          No scars yet. Make your first trade and Scar will remember the experiences that matter.
+        </p>
       </div>
     </section>
 
-    <!-- Screen: Swap -->
-    <section id="screen-swap" class="screen" aria-labelledby="swap-title">
-      <div class="wallet-display" id="wallet-display" style="display:none;margin-bottom:1rem">
+    <!-- Screen: Trade -->
+    <section id="screen-trade" class="screen" aria-labelledby="trade-title">
+      <div class="wallet-display" id="trade-wallet-display" style="display:none;margin-bottom:1rem">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
-        <span id="wallet-address" class="wallet-address"></span>
-        <span id="wallet-chain" class="wallet-chain"></span>
-        <button id="btn-disconnect" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+        <span id="trade-wallet-address" class="wallet-address"></span>
+        <span id="trade-wallet-chain" class="wallet-chain"></span>
+        <button id="trade-btn-disconnect" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
       </div>
 
       <div class="card">
-        <h2 id="swap-title">SWAP</h2>
+        <h2 id="trade-title">TRADE</h2>
 
         <!-- From -->
         <div style="margin-bottom:1.5rem">
@@ -136,8 +157,8 @@
       </div>
     </section>
 
-    <!-- Screen: History -->
-    <section id="screen-history" class="screen" aria-labelledby="history-title">
+    <!-- Screen: Your Scars -->
+    <section id="screen-scars" class="screen" aria-labelledby="history-title">
       <div class="wallet-display" id="wallet-display-history" style="display:flex;margin-bottom:1rem">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
         <span id="wallet-address-history" class="wallet-address"></span>
@@ -147,13 +168,32 @@
 
       <div class="card">
         <h2 id="history-title">YOUR SCARS</h2>
-        <p style="color:var(--muted);margin-bottom:1rem">Important swap experiences that shape future decisions. Not a full transaction archive.</p>
+        <p style="color:var(--muted);margin-bottom:1rem">
+          Important swap experiences that shape future decisions. Not a full transaction archive.
+        </p>
         <div id="history-list"></div>
         <div id="history-empty" class="empty-state" style="display:none">
           <div class="icon">🧠</div>
           <p>No important memories yet.</p>
           <p style="font-size:0.875rem">SCAR only remembers experiences that meaningfully change its decisions.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- Screen: Settings -->
+    <section id="screen-settings" class="screen" aria-labelledby="settings-title">
+      <div class="wallet-display" id="wallet-display-settings" style="display:flex;margin-bottom:1rem">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+        <span id="wallet-address-settings" class="wallet-address"></span>
+        <span id="wallet-chain-settings" class="wallet-chain"></span>
+        <button id="btn-disconnect-settings" class="btn btn-ghost" style="margin-left:auto;padding:0.375rem 0.75rem;font-size:0.75rem">Disconnect</button>
+      </div>
+
+      <div class="card">
+        <h2 id="settings-title">SETTINGS</h2>
+        <p style="color:var(--muted);margin-bottom:1rem">
+          Coming soon.
+        </p>
       </div>
     </section>
   </div>
@@ -179,6 +219,6 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=5"></script>
+  <script src="/js/app.js?v=6"></script>
 </body>
 </html>

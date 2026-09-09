@@ -100,6 +100,28 @@ def find_blocker(memories: list[dict], sit: dict) -> dict | None:
     return None
 
 
+def suggested_safer_amount(amount: float) -> float:
+    """Actual safer-terms logic, never hardcoded per trade.
+
+    Blockers match on the same amount bucket, and price impact grows
+    with size, so stepping down one bucket both escapes the recorded
+    bad conditions and genuinely lowers execution risk. Returns the top
+    of the next-smaller bucket (or half the amount inside dust)."""
+    try:
+        a = float(amount)
+    except (TypeError, ValueError):
+        return 0.0
+    if a >= 1000:
+        return 999.0
+    if a >= 100:
+        return 99.0
+    if a >= 10:
+        return 9.0
+    if a > 0:
+        return round(a / 2, 6)
+    return 0.0
+
+
 def evaluate(memory_client, situation: dict) -> dict:
     try:
         memory_client.set_tenant(situation["wallet"])
@@ -117,11 +139,17 @@ def evaluate(memory_client, situation: dict) -> dict:
                 "memory": {"slippageBps": b.get("slippageBps"),
                            "impactBps": b.get("impactBps"),
                            "outcome": b.get("outcome"),
-                           "txHash": b.get("txHash")}}
+                           "txHash": b.get("txHash")},
+                "safer_suggestion": {
+                    "amount": suggested_safer_amount(situation.get("amount", 0)),
+                    "reason": "A smaller size leaves the recorded bad conditions and lowers price impact. Re-quote at the suggested size for a fresh evaluation."}}
     if eff_slip(situation) >= DENY_SLIP_BPS:
         return {"decision": "SAFER_TERMS",
                 "message": "High slippage; try lower-risk config.",
-                "tx_submitted": False}
+                "tx_submitted": False,
+                "safer_suggestion": {
+                    "amount": suggested_safer_amount(situation.get("amount", 0)),
+                    "reason": "Smaller sizes carry lower price impact. Re-quote at the suggested size for a fresh evaluation."}}
     return {"decision": "ALLOW", "message": "Conditions acceptable.",
             "tx_submitted": True}
 
