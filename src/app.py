@@ -1,25 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import os, sys, json, time
-sys.path.insert(0, "/home/uyscutty/projects/scar/src")
+from pathlib import Path
+import os, sys, time
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from engine import build_situation, evaluate, record_experience
 from specialist import consult as specialist_consult, status as specialist_status
 from sibyl_memory_client import MemoryClient
-import httpx
-from uniswap import get_quote as uniswap_get_quote, get_best_quote, get_spot_rate, encode_swap_call, encode_erc20_approve, encode_permit2_approve, get_fee_tier, USDC, WETH, CHAIN_ID, PERMIT2, SWAP_ROUTER_02
+from uniswap import (get_best_quote, get_spot_rate, encode_swap_call,
+                     encode_erc20_approve, encode_permit2_approve,
+                     USDC, WETH, CHAIN_ID, PERMIT2, SWAP_ROUTER_02,
+                     QUOTER_V2, UNIVERSAL_ROUTER)
 
 app = FastAPI()
 
 DB_PATH = os.environ.get("SCAR_DB", "/tmp/scar_memory.db")
-
-# Real Uniswap/Base Sepolia refs verified from official docs
-UNISWAP_QUOTER_V2 = "0xC5290058841028F1614F3A6F0F5816cAd0df5E27"
-SWAP_ROUTER_02 = "0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4"
-UNIVERSAL_ROUTER = "0x492E6456D9528771018DeB9E87ef7750EF184104"
-PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3"
-USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
-WETH = "0x4200000000000000000000000000000000000006"
-CHAIN = 84532
 
 class Record(BaseModel):
     wallet: str
@@ -81,11 +75,12 @@ def health():
 @app.get("/quote_ref")
 def quote_ref():
     return {
-        "quoter_v2": UNISWAP_QUOTER_V2,
+        "quoter_v2": QUOTER_V2,
         "router": SWAP_ROUTER_02,
+        "universal_router": UNIVERSAL_ROUTER,
         "usdc": USDC,
         "weth": WETH,
-        "chain_id": CHAIN,
+        "chain_id": CHAIN_ID,
         "note": "Real QuoterV2 eth_call -> real quote; no fabricated values."
     }
 

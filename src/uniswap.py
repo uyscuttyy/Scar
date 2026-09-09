@@ -18,28 +18,6 @@ USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
 WETH = "0x4200000000000000000000000000000000000006"
 CHAIN_ID = 84532
 
-# QuoterV2 ABI - quoteExactInputSingle
-QUOTER_ABI = [
-    {
-        "inputs": [
-            {"internalType": "address", "name": "tokenIn", "type": "address"},
-            {"internalType": "address", "name": "tokenOut", "type": "address"},
-            {"internalType": "uint24", "name": "fee", "type": "uint24"},
-            {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-            {"internalType": "uint160", "name": "sqrtPriceLimitX96", "type": "uint160"}
-        ],
-        "name": "quoteExactInputSingle",
-        "outputs": [
-            {"internalType": "uint256", "name": "amountOut", "type": "uint256"},
-            {"internalType": "uint160", "name": "sqrtPriceX96After", "type": "uint160"},
-            {"internalType": "uint32", "name": "initializedTicksCrossed", "type": "uint32"},
-            {"internalType": "uint256", "name": "gasEstimate", "type": "uint256"}
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    }
-]
-
 # QuoterV2 (v3-periphery >=1.3) takes a STRUCT, not 5 flat args:
 # QuoteExactInputSingleParams { tokenIn, tokenOut, amountIn, fee,
 #   sqrtPriceLimitX96 } — note amountIn comes BEFORE fee.
@@ -52,14 +30,6 @@ QUOTE_SINGLE_SIG = "quoteExactInputSingle((address,address,uint256,uint24,uint16
 FEE_TIERS = (500, 3000, 10000, 100)
 
 FACTORY = "0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24"
-
-def get_fee_tier(token_in: str, token_out: str) -> int:
-    """Canonical fee tier for a pair. USDC-WETH is 500; default 3000."""
-    pair = {token_in.lower(), token_out.lower()}
-    if pair == {USDC.lower(), WETH.lower()}:
-        return 500
-    return 3000  # Default 0.3%
-
 
 async def get_pool_address(token_in: str, token_out: str, fee: int) -> str | None:
     """Factory pool address for a tier, or None if no pool exists."""
@@ -164,22 +134,6 @@ def decode_quote_result(result: str) -> dict:
         "gasEstimate": gas_estimate
     }
 
-async def get_quote(token_in: str, token_out: str, amount_in: int) -> dict:
-    """Get real quote from QuoterV2 on Base Sepolia."""
-    fee = get_fee_tier(token_in, token_out)
-    call_data = encode_quote_call(token_in, token_out, amount_in, fee)
-    result = await eth_call(QUOTER_V2, call_data)
-    decoded = decode_quote_result(result)
-    return {
-        "amountOut": decoded["amountOut"],
-        "gasEstimate": decoded["gasEstimate"],
-        "fee": fee,
-        "tokenIn": token_in,
-        "tokenOut": token_out,
-        "amountIn": amount_in
-    }
-
-
 async def get_best_quote(token_in: str, token_out: str,
                          amount_in: int) -> dict:
     """Quote every fee tier with a live pool; return the best amountOut.
@@ -210,31 +164,9 @@ async def get_best_quote(token_in: str, token_out: str,
         raise Exception("No live pool quote: " + "; ".join(errors))
     return best
 
-# SwapRouter02 ABI - exactInputSingle
-SWAP_ROUTER_ABI = [
-    {
-        "inputs": [
-            {
-                "components": [
-                    {"internalType": "address", "name": "tokenIn", "type": "address"},
-                    {"internalType": "address", "name": "tokenOut", "type": "address"},
-                    {"internalType": "uint24", "name": "fee", "type": "uint24"},
-                    {"internalType": "address", "name": "recipient", "type": "address"},
-                    {"internalType": "uint256", "name": "amountIn", "type": "uint256"},
-                    {"internalType": "uint256", "name": "amountOutMinimum", "type": "uint256"},
-                    {"internalType": "uint160", "name": "sqrtPriceLimitX96", "type": "uint160"}
-                ],
-                "internalType": "struct ISwapRouter.ExactInputSingleParams",
-                "name": "params",
-                "type": "tuple"
-            }
-        ],
-        "name": "exactInputSingle",
-        "outputs": [{"internalType": "uint256", "name": "amountOut", "type": "uint256"}],
-        "stateMutability": "payable",
-        "type": "function"
-    }
-]
+# SwapRouter02 exactInputSingle takes a struct:
+# ExactInputSingleParams { tokenIn, tokenOut, fee, recipient, amountIn,
+#   amountOutMinimum, sqrtPriceLimitX96 }.
 
 def encode_swap_call(token_in: str, token_out: str, fee: int, recipient: str,
                      amount_in: int, amount_out_min: int) -> str:
@@ -247,21 +179,7 @@ def encode_swap_call(token_in: str, token_out: str, fee: int, recipient: str,
     )
     return "0x" + selector.hex() + encoded.hex()
 
-# Permit2 ABI for approvals
-PERMIT2_ABI = [
-    {
-        "inputs": [
-            {"internalType": "address", "name": "token", "type": "address"},
-            {"internalType": "address", "name": "spender", "type": "address"},
-            {"internalType": "uint160", "name": "amount", "type": "uint160"},
-            {"internalType": "uint48", "name": "expiration", "type": "uint48"}
-        ],
-        "name": "approve",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-]
+# Permit2 approve(token, spender, amount, expiration).
 
 def encode_permit2_approve(token: str, spender: str, amount: int, expiration: int = 2**48 - 1) -> str:
     """Encode Permit2 approve call data."""
