@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SCAR — Memory-Aware Swap</title>
-  <link rel="stylesheet" href="/css/app.css?v=4">
+  <title>SCAR: Memory-Aware Swap</title>
+  <link rel="stylesheet" href="/css/app.css?v=5">
 </head>
 <body>
   <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
 
   <div class="container">
     <!-- Header / Nav -->
-    <header style="display:flex;align-items:center;justify-content:space-between;padding:1rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem">
+    <header class="app-header">
       <h1>SCAR</h1>
       <nav class="tabs" role="tablist">
         <button id="tab-home" class="tab active" role="tab" aria-selected="true">Home</button>
@@ -44,9 +44,9 @@
         <div id="wallet-picker"></div>
         <p id="provider-info" class="note" style="font-family:monospace"></p>
         <div id="home-intro-actions" style="margin-top:1.5rem">
-          <p id="home-meaningful-experiences" class="note"> — </p>
-          <p id="home-avoided-trades" class="note"> — </p>
-          <p id="home-recent-experience" class="note"> — </p>
+          <p id="home-meaningful-experiences" class="note">Loading...</p>
+          <p id="home-avoided-trades" class="note"></p>
+          <p id="home-recent-experience" class="note"></p>
           <button id="home-btn-start-trade" class="btn" style="width:100%;margin-top:1rem">Start a trade</button>
         </div>
         <p class="note" id="home-empty-state" style="display:none;margin-top:1rem">

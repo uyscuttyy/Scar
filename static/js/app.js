@@ -1,5 +1,5 @@
 /**
- * SCAR Frontend — Memory-Aware Swap Agent
+ * SCAR Frontend: Memory-Aware Swap Agent
  * Vanilla JS, no build step. Connects to FastAPI backend.
  */
 (function() {
@@ -161,9 +161,9 @@
   }
 
   function fmtNum(n, decimals = 4) {
-    if (n === null || n === undefined || n === '') return '—';
+    if (n === null || n === undefined || n === '') return '--';
     const num = Number(n);
-    if (isNaN(num)) return '—';
+    if (isNaN(num)) return '--';
     if (num === 0) return '0';
     if (num < 0.0001) return '< 0.0001';
     return num.toLocaleString(undefined, {
@@ -173,12 +173,12 @@
   }
 
   function fmtBps(bps) {
-    if (bps === null || bps === undefined) return '—';
+    if (bps === null || bps === undefined) return '--';
     return (bps / 100).toFixed(2) + '%';
   }
 
   function fmtDate(iso) {
-    if (!iso) return '—';
+    if (!iso) return '--';
     try {
       return new Date(iso).toLocaleDateString(undefined, {
         month: 'short', day: 'numeric', year: 'numeric'
@@ -237,7 +237,7 @@
       if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent =
         `${blockers.length} poor-outcome trade${blockers.length === 1 ? '' : 's'} Scar will help you avoid repeating.`;
       if (els.homeRecentExperience) els.homeRecentExperience.textContent =
-        `Most recent: ${rb.pair || '—'} ${rb.outcome || ''} (${fmtDate(rb.ts)}).`;
+        `Most recent: ${rb.pair || '--'} ${rb.outcome || ''} (${fmtDate(rb.ts)}).`;
     } catch (e) {
       console.warn('Home stats load failed:', e);
       if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Could not load memories.';
@@ -265,7 +265,7 @@
       }
       // Show wallet displays and hide connect button
       const address = fmtAddr(state.wallet);
-      const chainText = state.chainId === CHAIN_ID ? 'Base Sepolia ✓' : `Wrong network (${state.chainId}) — switch to Base Sepolia`;
+      const chainText = state.chainId === CHAIN_ID ? 'Base Sepolia ✓' : `Wrong network (${state.chainId}): switch to Base Sepolia`;
       const chainColor = state.chainId === CHAIN_ID ? 'var(--success)' : 'var(--danger)';
 
       // Home
@@ -396,7 +396,7 @@
   async function checkWallet() {
     showProviderInfo();
     if (typeof eth() === 'undefined') {
-      // EIP-6963 answers arrive async — give discovery a moment before
+      // EIP-6963 answers arrive async: give discovery a moment before
       // declaring no wallet.
       setTimeout(() => {
         showProviderInfo();
@@ -437,7 +437,7 @@
       const watchdog = setTimeout(() => {
         if (state.loading) {
           els.loadingText.textContent =
-            'Still waiting — check your wallet extension for a pending ' +
+            'Still waiting: check your wallet extension for a pending ' +
             'prompt. Unlock your wallet and allow popups for this site.';
         }
       }, 15000);
@@ -705,7 +705,7 @@
       const quote = await quoteRes.json();
       state.currentQuote = quote;
 
-      // Evaluate with decision engine — send both the quoted slippage
+      // Evaluate with decision engine: send both the quoted slippage
       // tolerance and the measured price impact; the backend decides on
       // the worse of the two.
       const slippageBps = Math.round((1 - quote.minOutput / quote.expectedOutput) * 10000);
@@ -814,7 +814,7 @@
     const sug = decision.safer_suggestion;
     let extra = '';
     if (decision.decision === 'DENY' || decision.decision === 'SAFER_TERMS') {
-      extra += `<div class="detail-row"><span class="detail-label">Transaction submitted</span><span class="detail-value">None — zero transactions</span></div>`;
+      extra += `<div class="detail-row"><span class="detail-label">Transaction submitted</span><span class="detail-value">None: zero transactions</span></div>`;
     }
     if (sug && sug.amount > 0) {
       extra += `
@@ -972,7 +972,7 @@
         const allowed = BigInt(allowRes);
         const needed = BigInt(Math.floor(parseFloat(state.fromAmount) * (10 ** state.fromToken.decimals)));
         if (allowed < needed) {
-          showTxStatus('pending', 'Approval needed — please sign to allow the swap.');
+          showTxStatus('pending', 'Approval needed: please sign to allow the swap.');
           const approveHash = await eth().request({
             method: 'eth_sendTransaction',
             params: [{
@@ -1128,7 +1128,7 @@
         <div class="memory-card">
           <div class="memory-header">
             <span class="memory-badge ${badgeClass}">${b.outcome || 'UNKNOWN'}</span>
-            <span class="memory-pair">${b.pair || '—'}</span>
+            <span class="memory-pair">${b.pair || '--'}</span>
           </div>
           <div class="memory-meta">
             <span>${fmtNum(b.amount)} ${(b.pair || '').split('→')[0]?.trim() || ''}</span>
@@ -1185,7 +1185,7 @@
     els.tabScars.addEventListener('click', () => showScreen('scars'));
     els.tabSettings.addEventListener('click', () => showScreen('settings'));
 
-    // Wallet events — attach to whichever provider answers.
+    // Wallet events: attach to whichever provider answers.
     const evProvider = eth();
     if (evProvider && evProvider.on) {
       evProvider.on('accountsChanged', accounts => {
@@ -1203,7 +1203,7 @@
     cacheElements();
     bindEvents();
     discoverProviders();
-    // Late discovery (extensions inject after load) — re-render picker.
+    // Late discovery (extensions inject after load): re-render picker.
     setTimeout(() => { renderWalletPicker(); showProviderInfo(); }, 1500);
     checkWallet();
 
