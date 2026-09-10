@@ -66,54 +66,27 @@
   function $$(sel, root = document) { return [...root.querySelectorAll(sel)]; }
 
   function cacheElements() {
-      // Screens
-      els.screenHome = $('#screen-home');
-      els.screenTrade = $('#screen-trade');
-      els.screenDecision = $('#screen-decision');
-      els.screenScars = $('#screen-scars');
-      els.screenSettings = $('#screen-settings');
+      // Nav (anchor scroll, not tab screens)
+      els.navLinks = $$('.nav-link[data-target]');
 
-      // Tabs
-      els.tabHome = $('#tab-home');
-      els.tabTrade = $('#tab-trade');
-      els.tabScars = $('#tab-scars');
-      els.tabSettings = $('#tab-settings');
+      // Wallet button in header
+      els.walletButton = $('#wallet-button');
+      els.walletLabel = $('#wallet-label');
 
-      // Wallet displays (one per screen)
-      els.homeWalletDisplay = $('#home-wallet-display');
-      els.homeWalletAddress = $('#home-wallet-address');
-      els.homeWalletChain = $('#home-wallet-chain');
-      els.homeBtnDisconnect = $('#home-btn-disconnect');
-      els.homeBtnConnect = $('#home-btn-connect');
+      // Hero CTAs
+      els.btnStartTrade = $('#btn-start-trade');
+      els.btnSeeHow = $('#btn-see-how');
+      els.btnFinalStart = $('#btn-final-start');
+      els.btnFinalScars = $('#btn-final-scars');
 
-      els.tradeWalletDisplay = $('#trade-wallet-display');
-      els.tradeWalletAddress = $('#trade-wallet-address');
-      els.tradeWalletChain = $('#trade-wallet-chain');
-      els.tradeBtnDisconnect = $('#trade-btn-disconnect');
+      // Hero demo card (live values, honest empty state)
+      els.demoSlippage = $('#demo-slippage');
+      els.demoImpact = $('#demo-impact');
+      els.demoPrevious = $('#demo-previous');
+      els.demoDecision = $('#demo-decision');
+      els.demoTrySafer = $('#demo-try-safer');
 
-      els.decisionWalletDisplay = $('#wallet-display-decision');
-      els.decisionWalletAddress = $('#wallet-address-decision');
-      els.decisionWalletChain = $('#wallet-chain-decision');
-      els.decisionBtnDisconnect = $('#btn-disconnect-decision');
-
-      els.scarsWalletDisplay = $('#wallet-display-history');
-      els.scarsWalletAddress = $('#wallet-address-history');
-      els.scarsWalletChain = $('#wallet-chain-history');
-      els.scarsBtnDisconnect = $('#btn-disconnect-history');
-
-      els.settingsWalletDisplay = $('#wallet-display-settings');
-      els.settingsWalletAddress = $('#wallet-address-settings');
-      els.settingsWalletChain = $('#wallet-chain-settings');
-      els.settingsBtnDisconnect = $('#btn-disconnect-settings');
-
-      // Home screen elements
-      els.homeMeaningfulExperiences = $('#home-meaningful-experiences');
-      els.homeAvoidedTrades = $('#home-avoided-trades');
-      els.homeRecentExperience = $('#home-recent-experience');
-      els.homeBtnStartTrade = $('#home-btn-start-trade');
-      els.homeEmptyState = $('#home-empty-state');
-
-      // Trade screen elements
+      // Trade section elements
       els.fromAmount = $('#from-amount');
       els.fromTokenBtn = $('#from-token-btn');
       els.toTokenBtn = $('#to-token-btn');
@@ -122,10 +95,10 @@
       els.quoteLoading = $('#quote-loading');
       els.quoteError = $('#quote-error');
 
-      // Decision screen elements
+      // Decision card elements
       els.decisionBanner = $('#decision-banner');
       els.decisionIcon = $('#decision-icon');
-      els.decisionTitle = $('#decision-title');
+      els.decisionTitle = $('#decision-title-text');
       els.decisionMessage = $('#decision-message');
       els.decisionDetails = $('#decision-details');
       els.decisionMemory = $('#decision-memory');
@@ -133,9 +106,9 @@
       els.btnBackToSwap = $('#btn-back-to-swap');
       els.txStatus = $('#tx-status');
 
-      // Scars screen elements
-      els.historyList = $('#history-list');
-      els.historyEmpty = $('#history-empty');
+      // Scars section elements
+      els.historyList = $('#scars-list');
+      els.historyEmpty = $('#scars-empty');
 
       // Specialist
       els.decisionSpecialist = $('#decision-specialist');
@@ -149,7 +122,29 @@
       els.loadingOverlay = $('#loading-overlay');
       els.loadingText = $('#loading-text');
       els.globalError = $('#global-error');
+
+      // Back-compat aliases (old screen/tab model removed)
+      els.screenHome = els.screenTrade = els.screenDecision = els.screenScars = els.screenSettings = null;
+      els.tabHome = els.tabTrade = els.tabScars = els.tabSettings = null;
+      els.homeWalletDisplay = els.homeWalletAddress = els.homeWalletChain = null;
+      els.homeBtnDisconnect = els.homeBtnConnect = null;
+      els.tradeWalletDisplay = els.tradeWalletAddress = els.tradeWalletChain = null;
+      els.tradeBtnDisconnect = null;
+      els.decisionWalletDisplay = els.decisionWalletAddress = els.decisionWalletChain = null;
+      els.decisionBtnDisconnect = null;
+      els.scarsWalletDisplay = els.scarsWalletAddress = els.scarsWalletChain = null;
+      els.scarsBtnDisconnect = null;
+      els.settingsWalletDisplay = els.settingsWalletAddress = els.settingsWalletChain = null;
+      els.settingsBtnDisconnect = null;
+      els.homeMeaningfulExperiences = els.homeAvoidedTrades = els.homeRecentExperience = null;
+      els.homeBtnStartTrade = els.btnStartTrade;
+      els.homeEmptyState = els.historyEmpty;
+      els.homeDecisionMessage = els.demoDecision;
+      els.homeScarRemembersList = els.historyList;
   }
+
+  // Null-safe event helper: missing elements must never kill init.
+  function on(el, evt, fn) { if (el) el.addEventListener(evt, fn); }
 
   // ──────────────────────────────────────────────────────────────
   // Helpers
@@ -186,12 +181,24 @@
     } catch { return iso; }
   }
 
+  // Single-page model: nav scrolls to sections. Section ids double as
+  // screen names ('trade', 'scars', 'decision', 'home' -> top).
+  const SCREEN_TARGET = {
+    home: '#hero', trade: '#trade', decision: '#decision-card',
+    scars: '#your-scars', settings: '#trade', how: '#how-it-works'
+  };
   function showScreen(name) {
     state.activeScreen = name;
-    $$('.screen').forEach(s => s.classList.remove('active'));
-    $(`#screen-${name}`)?.classList.add('active');
-    $$('.tab').forEach(t => t.classList.remove('active'));
-    $(`#tab-${name}`)?.classList.add('active');
+    const sel = SCREEN_TARGET[name] || `#${name}`;
+    const el = sel && $(sel);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      console.warn('showScreen: no target for', name);
+    }
+    if (els.navLinks) els.navLinks.forEach(a => {
+      a.classList.toggle('active', a.dataset.target === sel);
+    });
 
     // Update wallet displays on all screens when wallet state changes
     updateAllWalletDisplays();
@@ -210,6 +217,8 @@
       if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
       if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
       if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
+      if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'No recent trades.';
+      if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '';
       return;
     }
     try {
@@ -222,6 +231,8 @@
         if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
         if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
         if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
+        if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'No recent trades.';
+        if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '';
         return;
       }
       if (els.homeEmptyState) els.homeEmptyState.style.display = 'none';
@@ -238,11 +249,57 @@
         `${blockers.length} poor-outcome trade${blockers.length === 1 ? '' : 's'} Scar will help you avoid repeating.`;
       if (els.homeRecentExperience) els.homeRecentExperience.textContent =
         `Most recent: ${rb.pair || '--'} ${rb.outcome || ''} (${fmtDate(rb.ts)}).`;
+      // Decision message
+      if (els.homeDecisionMessage) {
+        if (rb.outcome === 'GOOD') {
+          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} succeeded.`;
+        } else if (rb.outcome === 'BAD') {
+          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} had poor outcome.`;
+        } else if (rb.outcome === 'FAILED') {
+          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} failed on-chain.`;
+        } else {
+          els.homeDecisionMessage.textContent = 'No recent trades.';
+        }
+      }
+      // Scar remembers list
+      if (els.homeScarRemembersList) {
+        els.homeScarRemembersList.innerHTML = '';
+        // Show up to 5 most recent memories
+        const toShow = [...memories].sort((a, b) =>
+          String((b.body || {}).ts || '').localeCompare(String((a.body || {}).ts || ''))
+        ).slice(0, 5);
+        for (const mem of toShow) {
+          const body = mem.body || {};
+          const pair = body.pair || '--';
+          const direction = body.direction ? body.direction.toUpperCase() : '';
+          const outcome = body.outcome || '--';
+          const ts = fmtDate(body.ts);
+          const importance = mem.importance || 0;
+          const card = document.createElement('div');
+          card.className = 'memory-card';
+          card.innerHTML = `
+            <div class="memory-header">
+              <span class="memory-badge ${outcome === 'GOOD' ? 'good' : outcome === 'BAD' ? 'bad' : 'failed'}">${outcome}</span>
+              <div class="memory-pair">${pair} ${direction}</div>
+            </div>
+            <div class="memory-meta">
+              <span>Importance: ${importance}</span>
+              <span>${ts}</span>
+            </div>
+          `;
+          els.homeScarRemembersList.appendChild(card);
+        }
+        if (toShow.length === 0) {
+          els.homeScarRemembersList.innerHTML = '<p class="note">No memories to show.</p>';
+        }
+      }
     } catch (e) {
       console.warn('Home stats load failed:', e);
       if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Could not load memories.';
       if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
       if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
+      if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'Could not load decision.';
+      if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '<p class="note">Error loading memories.</p>';
     }
   }
 
@@ -253,6 +310,17 @@
   }
 
   function updateAllWalletDisplays() {
+      // Header wallet button is the single source of truth.
+      if (els.walletLabel) {
+        els.walletLabel.textContent = state.wallet
+          ? `${fmtAddr(state.wallet)}${state.chainId === CHAIN_ID ? '' : ' (wrong network)'}`
+          : 'Connect Wallet';
+      }
+      if (els.walletButton) {
+        els.walletButton.title = state.wallet
+          ? (state.chainId === CHAIN_ID ? `Connected: ${state.wallet} (Base Sepolia). Click to disconnect.` : `Connected: ${state.wallet}. Wrong network, switch to Base Sepolia. Click to disconnect.`)
+          : 'Connect a wallet';
+      }
       if (!state.wallet) {
           // Hide all wallet displays
           if (els.homeWalletDisplay) els.homeWalletDisplay.style.display = 'none';
@@ -767,6 +835,20 @@
 
     // Details
     const slip = quote.slippageBps || Math.round((1 - quote.minOutput / quote.expectedOutput) * 10000);
+    // Hero demo card mirrors the live review (real values only).
+    if (els.demoSlippage) els.demoSlippage.textContent = fmtBps(slip);
+    if (els.demoImpact) els.demoImpact.textContent = fmtBps(quote.priceImpactBps || 0);
+    if (els.demoPrevious) {
+      els.demoPrevious.textContent = decision.memory
+        ? `${decision.memory.outcome || 'Poor'} execution (${fmtBps(decision.memory.slippageBps)})`
+        : 'No similar past trade';
+    }
+    if (els.demoDecision) {
+      els.demoDecision.textContent =
+        decision.decision === 'ALLOW' ? 'PROCEED' :
+        decision.decision === 'DENY' ? 'DON’T REPEAT THIS' :
+        'TRY SAFER TERMS';
+    }
     els.decisionDetails.innerHTML = `
       <div class="detail-row"><span class="detail-label">Pair</span><span class="detail-value">${state.fromToken.symbol} → ${state.toToken.symbol}</span></div>
       <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">${fmtNum(amount)} ${state.fromToken.symbol}</span></div>
@@ -1145,45 +1227,53 @@
   // Event Listeners
   // ──────────────────────────────────────────────────────────────
   function bindEvents() {
-    // Wallet
-    els.homeBtnConnect.addEventListener('click', connectWallet);
-    els.homeBtnDisconnect.addEventListener('click', disconnectWallet);
-    els.tradeBtnDisconnect.addEventListener('click', disconnectWallet);
-    els.decisionBtnDisconnect.addEventListener('click', disconnectWallet);
-    els.scarsBtnDisconnect.addEventListener('click', disconnectWallet);
-    els.settingsBtnDisconnect.addEventListener('click', disconnectWallet);
+    // Anchor nav: scroll to sections. Works with or without JS router.
+    if (els.navLinks) els.navLinks.forEach(a => {
+      a.addEventListener('click', () => {
+        const sel = a.dataset.target;
+        const el = sel && $(sel);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        els.navLinks.forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+      });
+    });
+
+    // Wallet: header button toggles connect/disconnect.
+    on(els.walletButton, 'click', () => {
+      if (state.wallet) disconnectWallet();
+      else connectWallet();
+    });
 
     // Token selection
-    els.fromTokenBtn.addEventListener('click', () => openTokenModal('from'));
-    els.toTokenBtn.addEventListener('click', () => openTokenModal('to'));
-    els.swapArrow.addEventListener('click', swapTokens);
+    on(els.fromTokenBtn, 'click', () => openTokenModal('from'));
+    on(els.toTokenBtn, 'click', () => openTokenModal('to'));
+    on(els.swapArrow, 'click', swapTokens);
 
     // Modal
-    els.tokenModal.addEventListener('click', e => {
+    on(els.tokenModal, 'click', e => {
       if (e.target === els.tokenModal) closeTokenModal();
     });
 
     // Amount
-    els.fromAmount.addEventListener('input', e => {
+    on(els.fromAmount, 'input', e => {
       state.fromAmount = e.target.value;
       validateSwapForm();
     });
 
     // Review swap
-    els.btnReview.addEventListener('click', fetchQuoteAndEvaluate);
+    on(els.btnReview, 'click', fetchQuoteAndEvaluate);
 
     // Decision actions
-    els.btnConfirmSwap.addEventListener('click', confirmSwap);
-    els.btnBackToSwap.addEventListener('click', () => showScreen('trade'));
+    on(els.btnConfirmSwap, 'click', confirmSwap);
+    on(els.btnBackToSwap, 'click', () => showScreen('trade'));
 
-    // Home CTA
-    els.homeBtnStartTrade.addEventListener('click', () => showScreen('trade'));
-
-    // Tabs
-    els.tabHome.addEventListener('click', () => showScreen('home'));
-    els.tabTrade.addEventListener('click', () => showScreen('trade'));
-    els.tabScars.addEventListener('click', () => showScreen('scars'));
-    els.tabSettings.addEventListener('click', () => showScreen('settings'));
+    // CTAs scroll to the real product sections
+    on(els.btnStartTrade, 'click', () => showScreen('trade'));
+    on(els.homeBtnStartTrade, 'click', () => showScreen('trade'));
+    on(els.btnSeeHow, 'click', () => showScreen('how'));
+    on(els.btnFinalStart, 'click', () => showScreen('trade'));
+    on(els.btnFinalScars, 'click', () => showScreen('scars'));
+    on(els.demoTrySafer, 'click', () => showScreen('trade'));
 
     // Wallet events: attach to whichever provider answers.
     const evProvider = eth();
@@ -1208,8 +1298,12 @@
     checkWallet();
 
     // Initial token button render
-    updateTokenButton(els.fromTokenBtn, state.fromToken);
-    updateTokenButton(els.toTokenBtn, state.toToken);
+    if (els.fromTokenBtn) updateTokenButton(els.fromTokenBtn, state.fromToken);
+    if (els.toTokenBtn) updateTokenButton(els.toTokenBtn, state.toToken);
+
+    // Single page: load scars/demo content up front (each guards on wallet).
+    loadHomeStats();
+    loadHistory();
   }
 
   if (document.readyState === 'loading') {
