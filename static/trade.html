@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Trade — SCAR</title>
   <meta name="description" content="Tell Scar what you want to trade. Scar checks your memory before anything is submitted.">
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Merriweather:wght@700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/app.css?v=8">
 </head>
 <body data-page="trade">
@@ -33,7 +33,7 @@
     <section class="section" id="trade">
       <div class="section-header">
         <div class="section-eyebrow">TRADE</div>
-        <h2 class="section-title">TELL SCAR WHAT YOU WANT TO TRADE.</h2>
+        <h2 class="section-title trade-title">TELL SCAR WHAT YOU WANT TO TRADE.</h2>
       </div>
       <div class="section-body" style="max-width:64rem">
         <div class="wallet-panel" id="trade-wallet-panel">
@@ -50,7 +50,7 @@
               <div class="input-row">
                 <input id="from-amount" type="number" placeholder="0.00" step="0.000001" min="0" aria-label="Amount to swap">
                 <button id="from-token-btn" class="token-selector" type="button" aria-label="Select from token">
-                  <span style="font-size:1.25rem">💵</span>
+                  <span class="coin-disc">U</span>
                   <span><span class="token-symbol">USDC</span><br><span class="token-name">USD Coin</span></span>
                 </button>
               </div>
@@ -61,7 +61,7 @@
             <div class="field">
               <label>To</label>
               <button id="to-token-btn" class="token-selector" type="button" style="width:100%" aria-label="Select to token">
-                <span style="font-size:1.25rem">🔷</span>
+                <span class="coin-disc">W</span>
                 <span><span class="token-symbol">WETH</span><br><span class="token-name">Wrapped Ether</span></span>
               </button>
             </div>

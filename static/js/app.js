@@ -20,14 +20,14 @@
       symbol: 'USDC',
       name: 'USD Coin',
       decimals: 6,
-      logo: '💵'
+      logo: 'U'
     },
     WETH: {
       address: '0x4200000000000000000000000000000000000006',
       symbol: 'WETH',
       name: 'Wrapped Ether',
       decimals: 18,
-      logo: '🔷'
+      logo: 'W'
     }
   };
   const TOKEN_LIST = Object.values(TOKENS);
@@ -468,6 +468,7 @@
     }
     // Silent auto-reconnect for a previously connected wallet.
     try {
+      state.provider = p;
       const accounts = await p.request({ method: 'eth_accounts' });
       let last = null;
       try { last = localStorage.getItem(LAST_WALLET_KEY); } catch {}
@@ -618,18 +619,10 @@
   }
 
   function renderTradeWalletPanel() {
-    if (els.tradeWalletDot) els.tradeWalletDot.classList.toggle('live', !!state.wallet);
-    if (els.tradeWalletText) {
-      const cs = chainState();
-      els.tradeWalletText.textContent = !state.wallet
-        ? 'Connect a wallet to begin. Scar checks memory before anything is submitted.'
-        : cs === 'ok'
-          ? `Connected ${fmtAddr(state.wallet)} on Base Sepolia.`
-          : cs === 'wrong'
-            ? `Connected ${fmtAddr(state.wallet)}, but your wallet is on another network. Open your wallet and switch to Base Sepolia, then press Review again.`
-            : `Connected ${fmtAddr(state.wallet)}. Still reading your wallet's network; if trading stays disabled, switch to Base Sepolia in your wallet and press Review again.`;
-    }
-    renderProviderPicker();
+    const panel = $('#trade-wallet-panel');
+    // Connected wallets see no panel at all: the header button holds the address.
+    if (panel) panel.style.display = state.wallet ? 'none' : 'block';
+    if (!state.wallet) renderProviderPicker();
   }
 
   async function switchToBaseSepolia(currentChainId) {
@@ -782,7 +775,7 @@
       const btn = document.createElement('button');
       btn.className = 'token-option' + (isSelected ? ' selected' : '');
       btn.innerHTML = `
-        <span style="font-size:1.25rem">${token.logo}</span>
+        <span class="coin-disc">${token.logo}</span>
         <div>
           <div class="token-symbol">${token.symbol}</div>
           <div class="token-name">${token.name}</div>
@@ -809,7 +802,7 @@
 
   function updateTokenButton(btn, token) {
     btn.innerHTML = `
-      <span style="font-size:1.25rem">${token.logo}</span>
+      <span class="coin-disc">${token.logo}</span>
       <div>
         <div class="token-symbol">${token.symbol}</div>
         <div class="token-name">${token.name}</div>
