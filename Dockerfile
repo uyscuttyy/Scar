@@ -12,6 +12,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY static/ ./static/
 
+# SQLite needs the directory to exist (no volume on free tiers).
+RUN mkdir -p /data
+
 EXPOSE 8000
 
 # Railway injects $PORT; default to 8000 locally.
