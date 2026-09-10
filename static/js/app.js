@@ -1311,7 +1311,7 @@
       const outcome = failed ? 'FAILED' : 'GOOD'; // Simplified; real impl would compare actual vs expected
       const slippageBps = state.currentQuote?.slippageBps || 0;
 
-      await fetch(`${API}/record`, {
+      const recRes = await fetch(`${API}/record`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1326,6 +1326,14 @@
           txHash: state.currentTxHash
         })
       });
+      const rec = await recRes.json().catch(() => ({}));
+      const note = $('#memory-note');
+      if (note) {
+        note.style.display = 'block';
+        note.textContent = rec.stored
+          ? `Scar kept this as a scar (importance ${rec.importance}). It will shape your next decision.`
+          : `Routine trade, journaled only (importance ${rec.importance ?? '--'}). Nothing painful enough to become a scar.`;
+      }
 
       // Refresh history
       await loadHistory();

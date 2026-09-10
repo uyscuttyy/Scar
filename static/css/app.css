@@ -519,7 +519,42 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
   .loop-sep { font-size: 0.7rem; }
 }
 
-/* Transaction status */
+/* Trade page: full width, sealed wallet card, oversized amount, pill review */
+#trade .section-body { max-width: none; }
+#trade .wallet-panel {
+  background: var(--ink); border-color: var(--ink); color: var(--paper);
+  border-radius: 18px; padding: 1.5rem 1.75rem;
+  box-shadow: 0 20px 46px -24px rgba(35, 33, 29, 0.5);
+}
+#trade .wallet-panel-row { font-size: 1rem; }
+#trade .wallet-dot { box-shadow: 0 0 0 4px rgba(122, 104, 196, 0.25); }
+#trade .wallet-dot.live { box-shadow: 0 0 0 4px rgba(46, 125, 79, 0.25); }
+#trade .trade-grid { margin-top: 0.5rem; }
+#trade .trade-card {
+  border-radius: 18px; padding: 1.75rem;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+#trade .trade-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 44px -20px rgba(35, 33, 29, 0.35);
+}
+#from-amount {
+  font-family: var(--font-display); font-weight: 700; font-size: 2rem;
+  padding: 0.9rem 1.1rem;
+}
+#btn-review { border-radius: 999px; padding: 0.9rem; font-size: 1rem; }
+#trade .token-selector { border-radius: 14px; }
+#trade .decision-banner { border-radius: 14px; }
+#trade .decision-title { font-family: var(--font-display); font-size: 1.35rem; }
+#trade .swap-arrow { transition: transform 300ms ease, border-color var(--transition), color var(--transition); }
+#trade .wallet-picker .wallet-pick { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+#trade .wallet-picker .note { color: var(--paper); opacity: 0.7; }
+#trade .swap-arrow:hover { transform: rotate(180deg); }
+.memory-note {
+  margin-top: 1rem; padding: 0.9rem 1.1rem; font-size: 0.88rem;
+  background: rgba(122, 104, 196, 0.1); border: 1px solid rgba(122, 104, 196, 0.4);
+  border-radius: var(--radius-sm); color: var(--ink);
+}
 .tx-status { padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 1rem; background: var(--paper); }
 .tx-status.success { border-color: var(--success); }
 .tx-status.error { border-color: var(--danger); }
