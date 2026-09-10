@@ -92,6 +92,11 @@
       els.demoPulse = $('#demo-pulse');
       els.demoTrySafer = $('#demo-try-safer');
 
+      // Trade page wallet panel
+      els.providerPicker = $('#provider-picker');
+      els.tradeWalletDot = $('#trade-wallet-dot');
+      els.tradeWalletText = $('#trade-wallet-text');
+
       // Trade section elements
       els.fromAmount = $('#from-amount');
       els.fromTokenBtn = $('#from-token-btn');
@@ -358,12 +363,31 @@
 
   // Direct connect goes to the most likely owner wallet first, so one click
   // always opens a real wallet popup. The chevron menu switches wallets.
+  // evmAsk-style selector extensions own window.ethereum and can throw
+  // inside their own code, so a same-named EIP-6963 provider always wins
+  // over the default proxy.
   function bestProvider() {
     if (state.provider) return state.provider;
     const choices = providerChoices();
     const named = (n) => choices.find(c => String(c.info.name || '').toLowerCase().includes(n));
-    return (named('metamask') || named('coinbase') || named('phantom')
-      || (window.ethereum || null) || (choices[0] && choices[0].provider) || null);
+    const six = choices.find(c => String(c.info.rdns || '') === 'io.metamask.io' || String(c.info.rdns || '') === 'io.metamask');
+    return ((six && six.provider) || (named('metamask') && named('metamask').provider)
+      || (named('coinbase') && named('coinbase').provider)
+      || (named('phantom') && named('phantom').provider)
+      || (choices[0] && choices[0].provider) || window.ethereum || null);
+  }
+
+  // Every provider call is guarded: a broken proxy (evmAsk selectExtension
+  // throws, Phantom answering for MetaMask, locked wallet) must never hang
+  // the UI. Returns { ok, result } instead of throwing.
+  async function safeRequest(provider, method, params) {
+    try {
+      const result = await provider.request(params ? { method, params } : { method });
+      return { ok: true, result };
+    } catch (e) {
+      console.warn('[scar] provider request failed:', method, e && e.code, e && e.message);
+      return { ok: false, error: e };
+    }
   }
 
   function setButtonLabel(text) {
@@ -379,6 +403,7 @@
       discovered.push({ info, provider });
       renderWalletMenu();
       refreshWalletStatus();
+      if (PAGE === 'trade') renderTradeWalletPanel();
     });
     try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch {}
   }
@@ -435,10 +460,11 @@
 
   async function checkWallet() {
     refreshWalletStatus();
-    const p = eth();
-    if (typeof p === 'undefined') {
+    if (PAGE === 'trade') renderTradeWalletPanel();
+    const p = bestProvider();
+    if (!p) {
       // Extensions inject late: re-check once before declaring none.
-      setTimeout(() => { renderWalletMenu(); refreshWalletStatus(); }, 1500);
+      setTimeout(() => { renderWalletMenu(); refreshWalletStatus(); if (PAGE === 'trade') renderTradeWalletPanel(); }, 1500);
       return;
     }
     // Silent auto-reconnect for a previously connected wallet.
@@ -457,13 +483,37 @@
     }
   }
 
-  async function connectWallet() {
-    const p = bestProvider();
+  // Explicit connector picker: each button talks to exactly one provider
+  // object, so a broken default proxy can never hijack the click.
+  // Tries providers in order until one returns accounts.
+  async function connectWithProvider(provider, name) {
+    console.log('[scar] trying provider:', name);
+    const acc = await safeRequest(provider, 'eth_requestAccounts');
+    if (!acc.ok) {
+      const e = acc.error || {};
+      // User rejection: stop, do not fall through to another wallet.
+      if (e.code === 4001) throw e;
+      console.warn('[scar] provider failed, trying next:', name);
+      return null;
+    }
+    if (!acc.result || !acc.result.length) return null;
+    return acc.result;
+  }
+
+  async function connectWallet(preferred) {
+    const ordered = [];
+    if (preferred) ordered.push(preferred);
+    const best = bestProvider();
+    if (best && (!preferred || preferred.provider !== best)) ordered.push({ provider: best, name: 'default' });
+    providerChoices().forEach(c => {
+      if (!ordered.some(o => o.provider === c.provider)) ordered.push({ provider: c.provider, name: c.info.name });
+    });
     console.log('[scar] connect click, providers:', providerChoices().map(c => c.info.name));
-    if (!p) {
+    if (!ordered.length) {
       const msg = 'No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload this page.';
       setWalletStatus(msg, 'warn');
       setGlobalError(msg);
+      renderProviderPicker(msg);
       return;
     }
 
@@ -471,6 +521,7 @@
       setLoading(true, 'Connecting wallet…');
       clearGlobalError();
       setButtonLabel('Waiting for approval…');
+      renderProviderPicker('', true);
 
       const watchdog = setTimeout(() => {
         if (state.loading && els.loadingText) {
@@ -480,25 +531,32 @@
         }
       }, 15000);
 
-      let accounts;
-      try {
-        accounts = await p.request({ method: 'eth_requestAccounts' });
-      } catch (e) {
-        clearTimeout(watchdog);
-        throw e;
+      let accounts = null;
+      let used = null;
+      let rejected = null;
+      for (const { provider, name } of ordered) {
+        try {
+          const got = await connectWithProvider(provider, name);
+          if (got) { accounts = got; used = provider; break; }
+        } catch (e) {
+          rejected = e;
+          break;
+        }
       }
       clearTimeout(watchdog);
+
+      if (rejected) throw rejected;
       console.log('[scar] accounts:', accounts && accounts.length);
+      if (!accounts || !accounts.length) {
+        throw new Error('No wallet answered. Unlock MetaMask (or your chosen wallet) and try again. If another extension owns the default connection, pick your wallet below.');
+      }
 
-      if (!accounts || !accounts.length) throw new Error('No accounts returned');
-
-      state.provider = p;
-      const chainId = await p.request({ method: 'eth_chainId' });
+      state.provider = used;
+      const chain = await safeRequest(used, 'eth_chainId');
       // A rejected network switch must not kill the connection itself.
-      try {
-        await switchToBaseSepolia(chainId);
-      } catch (e) {
-        console.warn('[scar] network switch declined:', e);
+      if (chain.ok) {
+        try { await switchToBaseSepolia(chain.result); }
+        catch (e) { console.warn('[scar] network switch declined:', e); }
       }
 
       await connectWalletWithAddress(accounts[0]);
@@ -507,10 +565,59 @@
       const msg = connectErrorMessage(e);
       setGlobalError(msg);
       setWalletStatus(msg, 'warn');
+      renderProviderPicker(msg);
       updateAllWalletDisplays();
     } finally {
       setLoading(false);
     }
+  }
+
+  // Trade-page picker: one button per detected wallet.
+  function renderProviderPicker(statusMsg, busy) {
+    const box = els.providerPicker;
+    if (!box) return;
+    box.innerHTML = '';
+    if (state.wallet) { box.hidden = true; return; }
+    box.hidden = false;
+    const choices = providerChoices();
+    if (!choices.length) {
+      const d = document.createElement('div');
+      d.className = 'note';
+      d.textContent = statusMsg || 'No wallet detected in this browser. Install MetaMask, then reload.';
+      box.appendChild(d);
+      return;
+    }
+    choices.forEach(({ info, provider }) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'wallet-pick';
+      b.disabled = !!busy;
+      b.textContent = `Connect ${info.name}`;
+      b.addEventListener('click', () => {
+        state.provider = provider;
+        connectWallet({ provider, name: info.name });
+      });
+      box.appendChild(b);
+    });
+    if (statusMsg && !busy) {
+      const d = document.createElement('div');
+      d.className = 'note';
+      d.style.width = '100%';
+      d.textContent = statusMsg;
+      box.appendChild(d);
+    }
+  }
+
+  function renderTradeWalletPanel() {
+    if (els.tradeWalletDot) els.tradeWalletDot.classList.toggle('live', !!state.wallet);
+    if (els.tradeWalletText) {
+      els.tradeWalletText.textContent = state.wallet
+        ? (state.chainId === CHAIN_ID
+          ? `Connected ${fmtAddr(state.wallet)} on Base Sepolia.`
+          : `Connected ${fmtAddr(state.wallet)} on chain ${state.chainId}. Switch to Base Sepolia in your wallet to trade.`)
+        : 'Connect a wallet to begin. Scar checks memory before anything is submitted.';
+    }
+    renderProviderPicker();
   }
 
   async function switchToBaseSepolia(currentChainId) {
@@ -556,6 +663,7 @@
     if (els.walletMenu) els.walletMenu.hidden = true;
     updateAllWalletDisplays();
     clearGlobalError();
+    if (PAGE === 'trade') renderTradeWalletPanel();
 
     // Fetch balances (trade page shows them on the token buttons)
     await fetchBalances();
@@ -580,6 +688,7 @@
     if (els.walletMenu) els.walletMenu.hidden = true;
     updateAllWalletDisplays();
     refreshWalletStatus();
+    if (PAGE === 'trade') renderTradeWalletPanel();
     if (PAGE === 'landing') loadLanding();
     if (PAGE === 'scars') loadHistory();
   }

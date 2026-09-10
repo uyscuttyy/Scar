@@ -92,6 +92,32 @@ body {
 }
 .wallet-status[data-kind="warn"] { color: var(--warn); }
 .wallet-status[data-kind="ok"] { color: var(--success); }
+
+/* Trade-page wallet panel: explicit connector picker (provider conflicts
+   make the default window.ethereum untrustworthy, so each wallet gets
+   its own button wired to its own provider object). */
+.wallet-panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.wallet-panel-row { display: flex; align-items: center; gap: 0.7rem; font-size: 0.92rem; }
+.wallet-dot {
+  width: 0.65rem; height: 0.65rem; border-radius: 50%;
+  background: var(--muted); flex-shrink: 0;
+}
+.wallet-dot.live { background: var(--success); }
+.wallet-picker { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.9rem; }
+.wallet-picker[hidden] { display: none; }
+.wallet-pick {
+  padding: 0.6rem 1.3rem; border-radius: 999px;
+  background: var(--ink); color: var(--paper);
+  font: inherit; font-weight: 600; font-size: 0.88rem;
+  border: 1px solid var(--ink); cursor: pointer;
+}
+.wallet-pick:hover { background: #000; }
+.wallet-pick:disabled { opacity: 0.45; cursor: not-allowed; }
+.wallet-pick.ghost { background: transparent; color: var(--ink); border-color: var(--border); }
 @media (max-width: 640px) {
   .header-inner { flex-wrap: wrap; gap: 0.75rem; }
   .main-nav { order: 3; width: 100%; overflow-x: auto; margin-left: 0; }
@@ -119,6 +145,7 @@ body {
   margin: 0 0 1.75rem; line-height: 1.65; max-width: 34rem;
 }
 .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.hero-actions .btn, .cta-actions .btn { border-radius: 999px; padding: 0.8rem 2rem; }
 .hero-card { min-width: 0; }
 .hero-card .note { margin-top: 0.9rem; }
 
