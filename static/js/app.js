@@ -72,6 +72,7 @@
       // Wallet button in header
       els.walletButton = $('#wallet-button');
       els.walletLabel = $('#wallet-label');
+      els.walletChev = $('#wallet-chev');
       els.walletMenu = $('#wallet-menu');
       els.walletStatus = $('#wallet-status');
 
@@ -81,11 +82,14 @@
       els.btnFinalStart = $('#btn-final-start');
       els.btnFinalScars = $('#btn-final-scars');
 
-      // Hero demo card (live values, honest empty state)
+      // Hero review card (live values, honest empty state)
       els.demoSlippage = $('#demo-slippage');
+      els.demoSlippageBar = $('#demo-slippage-bar');
       els.demoImpact = $('#demo-impact');
+      els.demoImpactBar = $('#demo-impact-bar');
       els.demoPrevious = $('#demo-previous');
       els.demoDecision = $('#demo-decision');
+      els.demoPulse = $('#demo-pulse');
       els.demoTrySafer = $('#demo-try-safer');
 
       // Trade section elements
@@ -342,7 +346,28 @@
         : window.ethereum.isPhantom ? 'Phantom' : 'Browser wallet';
       out.push({ info: { name, uuid: 'legacy' }, provider: window.ethereum });
     }
-    return out;
+    // Same wallet can arrive twice (EIP-6963 + window.ethereum): dedupe by name.
+    const seen = new Set();
+    return out.filter(({ info }) => {
+      const key = String(info.name || '').toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // Direct connect goes to the most likely owner wallet first, so one click
+  // always opens a real wallet popup. The chevron menu switches wallets.
+  function bestProvider() {
+    if (state.provider) return state.provider;
+    const choices = providerChoices();
+    const named = (n) => choices.find(c => String(c.info.name || '').toLowerCase().includes(n));
+    return (named('metamask') || named('coinbase') || named('phantom')
+      || (window.ethereum || null) || (choices[0] && choices[0].provider) || null);
+  }
+
+  function setButtonLabel(text) {
+    if (els.walletLabel) els.walletLabel.textContent = text;
   }
 
   function discoverProviders() {
@@ -382,20 +407,18 @@
 
   function refreshWalletStatus() {
     if (state.wallet) {
-      setWalletStatus(
-        state.chainId === CHAIN_ID
-          ? `Connected ${fmtAddr(state.wallet)} on Base Sepolia.`
-          : `Connected ${fmtAddr(state.wallet)}, but on chain ${state.chainId}. Scar needs Base Sepolia.`,
-        state.chainId === CHAIN_ID ? 'ok' : 'warn'
-      );
+      if (state.chainId !== CHAIN_ID) {
+        setWalletStatus(
+          `Connected ${fmtAddr(state.wallet)}, but on chain ${state.chainId}. Scar needs Base Sepolia; switch networks in your wallet to trade.`,
+          'warn'
+        );
+      } else {
+        setWalletStatus('', '');
+      }
       return;
     }
-    const choices = providerChoices();
-    if (!choices.length) {
-      setWalletStatus('No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload.', 'warn');
-    } else {
-      setWalletStatus(`Found ${choices.map(c => c.info.name).join(', ')}. Click Connect Wallet.`, '');
-    }
+    // Silent when disconnected: the button says everything. Only errors speak.
+    setWalletStatus('', '');
   }
 
   function renderWalletPicker() { renderWalletMenu(); refreshWalletStatus(); }
@@ -435,26 +458,19 @@
   }
 
   async function connectWallet() {
-    const p = eth();
-    if (typeof p === 'undefined') {
-      setWalletStatus('No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload this page.', 'warn');
-      setGlobalError('No wallet detected. Install MetaMask or Coinbase Wallet, then reload.');
-      return;
-    }
-
-    // Several wallets installed: let the user pick which one answers.
-    const choices = providerChoices();
-    if (!state.provider && choices.length > 1 && els.walletMenu) {
-      renderWalletMenu();
-      els.walletMenu.hidden = false;
-      setWalletStatus('Several wallets found. Choose which one to connect.', '');
+    const p = bestProvider();
+    console.log('[scar] connect click, providers:', providerChoices().map(c => c.info.name));
+    if (!p) {
+      const msg = 'No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload this page.';
+      setWalletStatus(msg, 'warn');
+      setGlobalError(msg);
       return;
     }
 
     try {
       setLoading(true, 'Connecting wallet…');
       clearGlobalError();
-      setWalletStatus('Waiting for the wallet… approve the connection request.', '');
+      setButtonLabel('Waiting for approval…');
 
       const watchdog = setTimeout(() => {
         if (state.loading && els.loadingText) {
@@ -464,20 +480,34 @@
         }
       }, 15000);
 
-      const accounts = await p.request({ method: 'eth_requestAccounts' });
+      let accounts;
+      try {
+        accounts = await p.request({ method: 'eth_requestAccounts' });
+      } catch (e) {
+        clearTimeout(watchdog);
+        throw e;
+      }
       clearTimeout(watchdog);
+      console.log('[scar] accounts:', accounts && accounts.length);
 
-      if (!accounts.length) throw new Error('No accounts returned');
+      if (!accounts || !accounts.length) throw new Error('No accounts returned');
 
+      state.provider = p;
       const chainId = await p.request({ method: 'eth_chainId' });
-      await switchToBaseSepolia(chainId);
+      // A rejected network switch must not kill the connection itself.
+      try {
+        await switchToBaseSepolia(chainId);
+      } catch (e) {
+        console.warn('[scar] network switch declined:', e);
+      }
 
       await connectWalletWithAddress(accounts[0]);
     } catch (e) {
-      console.error('Connect failed:', e);
+      console.error('[scar] connect failed:', e);
       const msg = connectErrorMessage(e);
       setGlobalError(msg);
       setWalletStatus(msg, 'warn');
+      updateAllWalletDisplays();
     } finally {
       setLoading(false);
     }
@@ -800,9 +830,12 @@
 
     // Details
     const slip = quote.slippageBps || Math.round((1 - quote.minOutput / quote.expectedOutput) * 10000);
-    // Hero demo card mirrors the live review (real values only).
+    const impact = quote.priceImpactBps || 0;
+    // Hero review card mirrors the live review (real values only).
     if (els.demoSlippage) els.demoSlippage.textContent = fmtBps(slip);
-    if (els.demoImpact) els.demoImpact.textContent = fmtBps(quote.priceImpactBps || 0);
+    if (els.demoSlippageBar) els.demoSlippageBar.style.width = Math.min(100, slip / 10) + '%';
+    if (els.demoImpact) els.demoImpact.textContent = fmtBps(impact);
+    if (els.demoImpactBar) els.demoImpactBar.style.width = Math.min(100, impact / 10) + '%';
     if (els.demoPrevious) {
       els.demoPrevious.textContent = decision.memory
         ? `${decision.memory.outcome || 'Poor'} execution (${fmtBps(decision.memory.slippageBps)})`
@@ -810,9 +843,13 @@
     }
     if (els.demoDecision) {
       els.demoDecision.textContent =
-        decision.decision === 'ALLOW' ? 'PROCEED' :
-        decision.decision === 'DENY' ? 'DON’T REPEAT THIS' :
-        'TRY SAFER TERMS';
+        decision.decision === 'ALLOW' ? 'Proceed' :
+        decision.decision === 'DENY' ? 'Don’t repeat this' :
+        'Try safer terms';
+      els.demoDecision.className = 'review-state ' + decision.decision.toLowerCase().replace('_terms', '');
+    }
+    if (els.demoPulse) {
+      els.demoPulse.className = 'review-pulse ' + (decision.decision === 'ALLOW' ? 'live' : decision.decision === 'DENY' ? 'bad' : '');
     }
     // Persist the review so the landing demo card shows real values.
     try {
@@ -824,8 +861,11 @@
         previous: decision.memory
           ? `${decision.memory.outcome || 'Poor'} execution (${fmtBps(decision.memory.slippageBps)})`
           : 'No similar past trade',
-        decision: decision.decision === 'ALLOW' ? 'PROCEED'
-          : decision.decision === 'DENY' ? 'DON’T REPEAT THIS' : 'TRY SAFER TERMS',
+        decision: decision.decision === 'ALLOW' ? 'Proceed'
+          : decision.decision === 'DENY' ? 'Don’t repeat this' : 'Try safer terms',
+        code: decision.decision,
+        slipBps: slip,
+        impactBps: impact,
         when: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
       }));
     } catch {}
@@ -1255,9 +1295,17 @@
       if (els.demoPairLabel) els.demoPairLabel.textContent = d.pair || 'USDC → WETH';
       if (els.demoAmount) els.demoAmount.textContent = d.amount || '--';
       if (els.demoSlippage) els.demoSlippage.textContent = d.slippage || '--';
+      if (els.demoSlippageBar && d.slipBps != null) els.demoSlippageBar.style.width = Math.min(100, d.slipBps / 10) + '%';
       if (els.demoImpact) els.demoImpact.textContent = d.impact || '--';
+      if (els.demoImpactBar && d.impactBps != null) els.demoImpactBar.style.width = Math.min(100, d.impactBps / 10) + '%';
       if (els.demoPrevious) els.demoPrevious.textContent = d.previous || 'No similar past trade';
-      if (els.demoDecision) els.demoDecision.textContent = d.decision || 'Review a swap to see Scar decide';
+      if (els.demoDecision) {
+        els.demoDecision.textContent = d.decision || 'Awaiting first review';
+        if (d.code) els.demoDecision.className = 'review-state ' + String(d.code).toLowerCase().replace('_terms', '');
+      }
+      if (els.demoPulse && d.code) {
+        els.demoPulse.className = 'review-pulse ' + (d.code === 'ALLOW' ? 'live' : d.code === 'DENY' ? 'bad' : '');
+      }
       if (els.demoSourceNote) els.demoSourceNote.textContent = `Last reviewed${d.when ? ' on ' + d.when : ''}. Live values from your most recent review.`;
     }
     if (!state.wallet) {
@@ -1303,11 +1351,18 @@
       });
     });
 
-    // Wallet: header button toggles connect/disconnect.
+    // Wallet: main button connects (or disconnects). Chevron switches wallets.
     on(els.walletButton, 'click', (ev) => {
+      if (ev.target && ev.target.id === 'wallet-chev') return;
       ev.stopPropagation();
       if (state.wallet) disconnectWallet();
       else connectWallet();
+    });
+    on(els.walletChev, 'click', (ev) => {
+      ev.stopPropagation();
+      if (!els.walletMenu) return;
+      renderWalletMenu();
+      els.walletMenu.hidden = !els.walletMenu.hidden;
     });
     // Choosing a wallet from the menu must not toggle the button.
     document.addEventListener('click', (ev) => {
