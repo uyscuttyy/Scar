@@ -239,9 +239,7 @@
   function updateAllWalletDisplays() {
       // Header wallet button is the single source of truth.
       if (els.walletLabel) {
-        els.walletLabel.textContent = state.wallet
-          ? `${fmtAddr(state.wallet)}${state.chainId === CHAIN_ID ? '' : ' (wrong network)'}`
-          : 'Connect Wallet';
+        els.walletLabel.textContent = state.wallet ? fmtAddr(state.wallet) : 'Connect Wallet';
       }
       if (els.walletButton) {
         els.walletButton.title = state.wallet
@@ -432,9 +430,10 @@
 
   function refreshWalletStatus() {
     if (state.wallet) {
-      if (state.chainId !== CHAIN_ID) {
+      const cs = chainState();
+      if (cs === 'wrong') {
         setWalletStatus(
-          `Connected ${fmtAddr(state.wallet)}, but on chain ${state.chainId}. Scar needs Base Sepolia; switch networks in your wallet to trade.`,
+          `Connected ${fmtAddr(state.wallet)}, but your wallet is on another network. Switch to Base Sepolia in your wallet to trade.`,
           'warn'
         );
       } else {
@@ -572,33 +571,21 @@
     }
   }
 
-  // Trade-page picker: one button per detected wallet.
+  // Trade-page picker: a single anonymous Connect button. Provider choice
+  // happens silently (ordered fallback); wallet names never show.
   function renderProviderPicker(statusMsg, busy) {
     const box = els.providerPicker;
     if (!box) return;
     box.innerHTML = '';
     if (state.wallet) { box.hidden = true; return; }
     box.hidden = false;
-    const choices = providerChoices();
-    if (!choices.length) {
-      const d = document.createElement('div');
-      d.className = 'note';
-      d.textContent = statusMsg || 'No wallet detected in this browser. Install MetaMask, then reload.';
-      box.appendChild(d);
-      return;
-    }
-    choices.forEach(({ info, provider }) => {
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'wallet-pick';
-      b.disabled = !!busy;
-      b.textContent = `Connect ${info.name}`;
-      b.addEventListener('click', () => {
-        state.provider = provider;
-        connectWallet({ provider, name: info.name });
-      });
-      box.appendChild(b);
-    });
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'wallet-pick';
+    b.disabled = !!busy;
+    b.textContent = busy ? 'Waiting for approval…' : 'Connect Wallet';
+    b.addEventListener('click', () => connectWallet());
+    box.appendChild(b);
     if (statusMsg && !busy) {
       const d = document.createElement('div');
       d.className = 'note';
@@ -608,14 +595,39 @@
     }
   }
 
+  // The wallet sometimes answers accounts before it answers the network.
+  // Retry, and never present an unknown network as the user's fault.
+  async function refreshChain() {
+    const p = state.provider || bestProvider();
+    if (!p) return null;
+    for (let i = 0; i < 3; i++) {
+      const c = await safeRequest(p, 'eth_chainId');
+      if (c.ok && c.result) {
+        const id = parseInt(c.result, 16);
+        if (!isNaN(id)) { state.chainId = id; return id; }
+      }
+      await new Promise(r => setTimeout(r, 400));
+    }
+    return state.chainId;
+  }
+
+  function chainState() {
+    if (state.chainId === CHAIN_ID) return 'ok';
+    if (state.chainId == null) return 'unknown';
+    return 'wrong';
+  }
+
   function renderTradeWalletPanel() {
     if (els.tradeWalletDot) els.tradeWalletDot.classList.toggle('live', !!state.wallet);
     if (els.tradeWalletText) {
-      els.tradeWalletText.textContent = state.wallet
-        ? (state.chainId === CHAIN_ID
+      const cs = chainState();
+      els.tradeWalletText.textContent = !state.wallet
+        ? 'Connect a wallet to begin. Scar checks memory before anything is submitted.'
+        : cs === 'ok'
           ? `Connected ${fmtAddr(state.wallet)} on Base Sepolia.`
-          : `Connected ${fmtAddr(state.wallet)} on chain ${state.chainId}. Switch to Base Sepolia in your wallet to trade.`)
-        : 'Connect a wallet to begin. Scar checks memory before anything is submitted.';
+          : cs === 'wrong'
+            ? `Connected ${fmtAddr(state.wallet)}, but your wallet is on another network. Open your wallet and switch to Base Sepolia, then press Review again.`
+            : `Connected ${fmtAddr(state.wallet)}. Still reading your wallet's network; if trading stays disabled, switch to Base Sepolia in your wallet and press Review again.`;
     }
     renderProviderPicker();
   }
@@ -652,13 +664,8 @@
     state.connected = true;
     try { localStorage.setItem(LAST_WALLET_KEY, state.wallet); } catch {}
 
-    // Verify chain
-    try {
-      const chainId = await eth().request({ method: 'eth_chainId' });
-      state.chainId = parseInt(chainId, 16);
-    } catch (e) {
-      console.warn('Chain check failed:', e);
-    }
+    // Verify chain (retried; unknown is reported honestly, never as user error)
+    await refreshChain();
 
     if (els.walletMenu) els.walletMenu.hidden = true;
     updateAllWalletDisplays();
@@ -831,10 +838,16 @@
     const differentTokens = state.fromToken.symbol !== state.toToken.symbol;
     const correctChain = state.chainId === CHAIN_ID;
 
-    els.btnReview.disabled = !(hasAmount && hasBalance && differentTokens && correctChain);
+    // Unknown network still allows pressing Review: the click re-reads the
+    // network first. Fully disconnected wallets stay disabled.
+    const chainOk = correctChain || (state.wallet && state.chainId == null);
+    els.btnReview.disabled = !(hasAmount && hasBalance && differentTokens && chainOk);
 
-    if (!correctChain) {
-      els.quoteError.textContent = 'Please switch to Base Sepolia network';
+    if (state.wallet && state.chainId == null) {
+      els.quoteError.textContent = 'Reading your wallet’s network… press Review and Scar will re-check before quoting.';
+      els.quoteError.style.display = 'block';
+    } else if (!correctChain) {
+      els.quoteError.textContent = 'Your wallet is on another network. Switch to Base Sepolia in your wallet, then press Review again.';
       els.quoteError.style.display = 'block';
     } else {
       els.quoteError.style.display = 'none';
@@ -847,6 +860,21 @@
   async function fetchQuoteAndEvaluate() {
     const amount = parseFloat(state.fromAmount);
     if (isNaN(amount) || amount <= 0) return;
+
+    // Re-read the network right before quoting: the wallet sometimes
+    // answers accounts before it answers the network.
+    if (state.wallet && state.chainId !== CHAIN_ID) {
+      await refreshChain();
+      validateSwapForm();
+      if (PAGE === 'trade') renderTradeWalletPanel();
+      if (state.chainId !== CHAIN_ID) {
+        const msg = state.chainId == null
+          ? 'Still cannot read your wallet’s network. Switch to Base Sepolia in your wallet, then press Review again.'
+          : 'Your wallet is on another network. Switch to Base Sepolia in your wallet, then press Review again.';
+        if (els.quoteError) { els.quoteError.textContent = msg; els.quoteError.style.display = 'block'; }
+        return;
+      }
+    }
 
     try {
       setLoading(true, 'Fetching quote…');
