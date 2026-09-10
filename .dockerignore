@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+tests/
+scripts/
+e2e_*.py
+*.db
+.env

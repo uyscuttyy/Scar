@@ -274,5 +274,7 @@ def get_history(wallet: str):
         raise HTTPException(status_code=503, detail={"error": str(e)})
 
 # Static files - mount LAST so API routes take priority
+from pathlib import Path
 from fastapi.staticfiles import StaticFiles
-app.mount("/", StaticFiles(directory="/home/uyscutty/projects/scar/static", html=True), name="static")
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
