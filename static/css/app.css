@@ -371,12 +371,21 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
 }
 
 /* Memory-behavior: session tickets with stamp + verdict card */
+#memory-behavior .section-body { max-width: none; }
+#memory-behavior .section-header { max-width: 56rem; }
 .session-flow { display: grid; gap: 0; margin-top: 1rem; }
 .session-ticket {
   position: relative; background: var(--card);
   border: 1px solid var(--border); border-radius: 16px;
   padding: 1.5rem 1.75rem;
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
+.session-ticket:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px -20px rgba(35, 33, 29, 0.35);
+}
+.session-cta { text-align: center; margin-top: 2rem; }
+.btn-pill { border-radius: 999px; }
 .session-ticket p { margin: 0.4rem 0; }
 .session-stamp {
   display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em;
