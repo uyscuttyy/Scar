@@ -35,15 +35,22 @@
         <div class="section-eyebrow">YOUR SCARS</div>
         <h2 class="section-title">EVERY IMPORTANT TRADE LEAVES A SCAR.</h2>
       </div>
-      <div class="section-body">
+      <div class="section-body scars-body">
         <p>Not a transaction archive. Only the experiences important enough to change a future decision, each scoped to your wallet.</p>
-        <div id="scars-summary" class="note" style="margin-bottom:1.5rem"></div>
+        <div id="scars-summary" class="scars-stats" style="display:none"></div>
         <div id="scars-list" class="scars-list"></div>
         <div id="scars-empty" class="empty-state" style="display:none">
-          <div class="empty-icon">🧠</div>
-          <p>NO SCARS YET.</p>
-          <p>Scar will remember the experiences that matter.</p>
-          <p><a class="btn btn-primary" href="/trade.html" style="margin-top:1rem">Make your first trade</a></p>
+          <div class="empty-seal" aria-hidden="true">✦</div>
+          <div data-empty="locked">
+            <p class="empty-title">YOUR SCARS ARE SEALED TO YOUR WALLET.</p>
+            <p>Connect on the trade page and Scar will unseal the experiences tied to your address.</p>
+            <p><a class="btn btn-primary btn-pill" href="/trade.html" style="margin-top:1rem">Go to the trade page</a></p>
+          </div>
+          <div data-empty="clean" hidden>
+            <p class="empty-title">A CLEAN RECORD.</p>
+            <p>No scar yet. Make your first trade and Scar will remember only what matters.</p>
+            <p><a class="btn btn-primary btn-pill" href="/trade.html" style="margin-top:1rem">Make your first trade</a></p>
+          </div>
         </div>
       </div>
     </section>

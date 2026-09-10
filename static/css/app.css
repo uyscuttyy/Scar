@@ -469,12 +469,26 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
 .footer-column a { color: var(--ink-soft); text-decoration: none; font-size: 0.9rem; background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
 .footer-column a:hover { color: var(--ink); }
 
-/* Scars page: stat band + cards with lift */
-#scars-summary {
-  display: block; background: var(--ink); color: var(--paper);
-  border-radius: var(--radius); padding: 1rem 1.5rem;
-  font-size: 0.95rem; margin-bottom: 1.75rem;
+/* Scars page: full width, stat trio, card wall, sealed empty state */
+#your-scars .section-body.scars-body { max-width: none; }
+.scars-stats { display: grid; gap: 1rem; margin: 2rem 0; }
+@media (min-width: 768px) { .scars-stats { grid-template-columns: repeat(3, 1fr); } }
+.stat {
+  background: var(--ink); color: var(--paper);
+  border-radius: 18px; padding: 1.5rem 1.75rem;
 }
+.stat-num { font-family: var(--font-display); font-weight: 900; font-size: 2.4rem; line-height: 1; }
+.stat-label { font-size: 0.8rem; letter-spacing: 0.08em; opacity: 0.65; margin-top: 0.5rem; }
+#your-scars .scars-list { display: grid; gap: 1rem; }
+@media (min-width: 900px) { #your-scars .scars-list { grid-template-columns: 1fr 1fr; } }
+#your-scars .memory-card { margin-bottom: 0; }
+#your-scars .memory-pair { font-family: var(--font-display); font-size: 1.05rem; }
+#your-scars .empty-state { border-style: solid; padding: 4rem 2rem; }
+.empty-seal {
+  font-size: 2rem; color: var(--accent); margin-bottom: 1rem;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+.empty-title { font-family: var(--font-display); font-weight: 900; font-size: 1.4rem; letter-spacing: 0.02em; }
 #your-scars .memory-card { transition: transform 200ms ease, box-shadow 200ms ease; }
 #your-scars .memory-card:hover {
   transform: translateY(-3px);

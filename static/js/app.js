@@ -1381,8 +1381,15 @@
   async function loadHistory() {
     if (!state.wallet) {
       if (els.historyList) els.historyList.innerHTML = '';
-      if (els.historyEmpty) els.historyEmpty.style.display = 'block';
-      if (els.scarsSummary) els.scarsSummary.textContent = 'Connect a wallet to see your scars.';
+      if (els.historyEmpty) {
+        els.historyEmpty.style.display = 'block';
+        els.historyEmpty.dataset.state = 'locked';
+        const locked = els.historyEmpty.querySelector('[data-empty="locked"]');
+        const clean = els.historyEmpty.querySelector('[data-empty="clean"]');
+        if (locked) locked.hidden = false;
+        if (clean) clean.hidden = true;
+      }
+      if (els.scarsSummary) { els.scarsSummary.style.display = 'none'; els.scarsSummary.innerHTML = ''; }
       return;
     }
 
@@ -1395,7 +1402,7 @@
       console.warn('History load failed:', e);
       if (els.historyList) els.historyList.innerHTML = '';
       if (els.historyEmpty) els.historyEmpty.style.display = 'block';
-      if (els.scarsSummary) els.scarsSummary.textContent = 'Could not load memories.';
+      if (els.scarsSummary) { els.scarsSummary.style.display = 'none'; els.scarsSummary.innerHTML = ''; }
     }
   }
 
@@ -1406,18 +1413,27 @@
     if (!els.historyList) return;
     if (!sorted.length) {
       els.historyList.innerHTML = '';
-      if (els.historyEmpty) els.historyEmpty.style.display = 'block';
-      if (els.scarsSummary) els.scarsSummary.textContent =
-        state.wallet ? 'No scars yet. Make your first trade and Scar will remember what matters.' : 'Connect a wallet to see your scars.';
+      if (els.historyEmpty) {
+        els.historyEmpty.style.display = 'block';
+        els.historyEmpty.dataset.state = 'clean';
+        const locked = els.historyEmpty.querySelector('[data-empty="locked"]');
+        const clean = els.historyEmpty.querySelector('[data-empty="clean"]');
+        if (locked) locked.hidden = true;
+        if (clean) clean.hidden = false;
+      }
+      if (els.scarsSummary) { els.scarsSummary.style.display = 'none'; els.scarsSummary.innerHTML = ''; }
       return;
     }
     if (els.historyEmpty) els.historyEmpty.style.display = 'none';
     els.historyList.innerHTML = shown.map(scarCard).join('');
     if (els.scarsSummary) {
-      const blockers = sorted.filter(m => ['BAD', 'FAILED'].includes((m.body || {}).outcome)).length;
-      els.scarsSummary.textContent =
-        `${sorted.length} meaningful experience${sorted.length === 1 ? '' : 's'} remembered. ` +
-        `${blockers} poor-outcome trade${blockers === 1 ? '' : 's'} Scar will help you avoid repeating.`;
+      const blockers = sorted.filter(m => ['BAD', 'FAILED'].includes((m.body || {}).outcome));
+      const recent = sorted[0].body || {};
+      els.scarsSummary.style.display = 'grid';
+      els.scarsSummary.innerHTML = `
+        <div class="stat"><div class="stat-num">${sorted.length}</div><div class="stat-label">Scars remembered</div></div>
+        <div class="stat"><div class="stat-num">${blockers.length}</div><div class="stat-label">Trades to avoid repeating</div></div>
+        <div class="stat"><div class="stat-num">${recent.outcome || '--'}</div><div class="stat-label">Most recent: ${recent.pair || '--'}</div></div>`;
     }
   }
 
