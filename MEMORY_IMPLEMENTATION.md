@@ -4,6 +4,10 @@ If you only read one doc before trusting Scar with a trade, make it this
 one. It covers what gets remembered, how it changes decisions, and the
 guarantees that keep memory load-bearing instead of decorative.
 
+Want proof instead of promises? Run the demo and watch a denial happen:
+`scripts/demo.py` walks a wallet through ALLOW → FAIL → DENY using the
+exact rules below. No staging, no mocks.
+
 ---
 
 ## The big idea in one paragraph

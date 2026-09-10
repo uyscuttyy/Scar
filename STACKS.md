@@ -1,7 +1,13 @@
 # SCAR stacks — everything the app stands on, and why
 
 No framework soup. Every dependency below earns its place. If you are a
-host wondering "can I run and trust this?" — start here.
+host wondering "can I run and trust this?" — start here. Short answer:
+yes, on any machine with Python 3.10+: two commands and you are live.
+
+```bash
+pip install -r requirements.txt
+SCAR_DB=/tmp/scar_memory.db .venv/bin/python -m uvicorn src.app:app --host 127.0.0.1 --port 8000
+```
 
 ---
 
