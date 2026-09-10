@@ -35,13 +35,47 @@
         <div class="section-eyebrow">HOW IT WORKS</div>
         <h2 class="section-title">A SIMPLE LOOP THAT PROTECTS YOU FROM REPEAT MISTAKES.</h2>
       </div>
-      <div class="section-body">
-        <div class="steps">
-          <div class="step"><div class="step-number">01</div><div class="step-content"><h3>Make a trade</h3><p>Tell Scar what you want to trade: token, direction, amount.</p></div></div>
-          <div class="step"><div class="step-number">02</div><div class="step-content"><h3>Scar remembers</h3><p>Relevant experiences are retrieved from your wallet-scoped memory. No memory, no vote: without it Scar cannot be experience-aware and says so.</p></div></div>
-          <div class="step"><div class="step-number">03</div><div class="step-content"><h3>Scar compares</h3><p>Current slippage and price impact are compared against the conditions stored with each past experience.</p></div></div>
-          <div class="step"><div class="step-number">04</div><div class="step-content"><h3>Scar decides</h3><p>ALLOW, DENY, or SAFER TERMS. A denial submits zero transactions and names the memory that blocked it.</p></div></div>
-          <div class="step"><div class="step-number">05</div><div class="step-content"><h3>Scar learns</h3><p>Only important outcomes are stored. Routine successes stay journal-only; failures and painful executions become scars.</p></div></div>
+      <div class="section-body problem-body">
+        <div class="phases">
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">01</div>
+            <div class="phase-card">
+              <h3>MAKE A TRADE</h3>
+              <p>Tell Scar what you want to trade: token, direction, amount.</p>
+            </div>
+          </div>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">02</div>
+            <div class="phase-card">
+              <h3>SCAR REMEMBERS</h3>
+              <p>Relevant experiences are retrieved from your wallet-scoped memory. No memory, no vote: without it Scar cannot be experience-aware and says so.</p>
+            </div>
+          </div>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">03</div>
+            <div class="phase-card">
+              <h3>SCAR COMPARES</h3>
+              <p>Current slippage and price impact are compared against the conditions stored with each past experience.</p>
+            </div>
+          </div>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">04</div>
+            <div class="phase-card">
+              <h3>SCAR DECIDES</h3>
+              <p>ALLOW, DENY, or SAFER TERMS. A denial submits zero transactions and names the memory that blocked it.</p>
+            </div>
+          </div>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">05</div>
+            <div class="phase-card phase-card-final">
+              <h3>SCAR LEARNS</h3>
+              <p>Only important outcomes are stored. Routine successes stay journal-only; failures and painful executions become scars.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -52,35 +86,43 @@
         <h2 class="section-title">SCAR REMEMBERS CONTEXT, NOT JUST EVENTS.</h2>
       </div>
       <div class="section-body">
-        <p>Scar does not remember “you traded this token before.” It remembers the conditions around the experience, and compares them with the conditions in front of it.</p>
-        <div class="comparison">
-          <div class="comparison-column">
-            <h3>PREVIOUS EXPERIENCE</h3>
+        <p class="problem-lead">Scar does not remember “you traded this token before.” It remembers the conditions around the experience, and compares them with the conditions in front of it.</p>
+        <div class="session-flow" style="margin-top:2rem">
+          <div class="session-ticket">
+            <div class="session-stamp">PREVIOUS EXPERIENCE</div>
             <div class="comparison-item"><span class="label">Trade</span><span class="value">USDC → token</span></div>
             <div class="comparison-item"><span class="label">Slippage</span><span class="value">High</span></div>
             <div class="comparison-item"><span class="label">Price impact</span><span class="value">High</span></div>
             <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
           </div>
-          <div class="comparison-column"><div class="vs-label">SAME CONDITIONS →</div></div>
-          <div class="comparison-column">
-            <h3>CURRENT TRADE</h3>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">SAME CONDITIONS</div>
             <div class="comparison-item"><span class="label">Slippage</span><span class="value">Similar</span></div>
             <div class="comparison-item"><span class="label">Price impact</span><span class="value">Similar</span></div>
-            <div class="comparison-item"><span class="label">Scar</span><span class="value decision deny">DENY</span></div>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket session-verdict">
+            <div class="session-stamp">SCAR</div>
+            <p><span class="decision deny">DENY</span></p>
           </div>
         </div>
         <div class="divider"></div>
-        <div class="comparison">
-          <div class="comparison-column">
-            <h3>PREVIOUS EXPERIENCE</h3>
+        <div class="session-flow">
+          <div class="session-ticket">
+            <div class="session-stamp">PREVIOUS EXPERIENCE</div>
             <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
           </div>
-          <div class="comparison-column"><div class="vs-label">BETTER CONDITIONS →</div></div>
-          <div class="comparison-column">
-            <h3>CURRENT TRADE</h3>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">BETTER CONDITIONS</div>
             <div class="comparison-item"><span class="label">Slippage</span><span class="value">Much lower</span></div>
             <div class="comparison-item"><span class="label">Price impact</span><span class="value">Much lower</span></div>
-            <div class="comparison-item"><span class="label">Scar</span><span class="value decision allow">ALLOW</span></div>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket session-verdict allow">
+            <div class="session-stamp">SCAR</div>
+            <p><span class="decision allow">ALLOW</span></p>
           </div>
         </div>
       </div>
@@ -91,16 +133,35 @@
         <div class="section-eyebrow">WHEN SCAR ISN’T SURE</div>
         <h2 class="section-title">IT CAN ASK FOR HELP.</h2>
       </div>
-      <div class="section-body">
-        <p>When Scar needs additional information, it can request specialist analysis from another agent before its final decision. The specialist advises; Scar decides.</p>
-        <div class="timeline">
-          <div class="timeline-block"><h3>CURRENT TRADE</h3><p>You initiate a swap.</p></div>
-          <div class="timeline-block"><h3>SCAR</h3><p>Evaluates conditions but lacks decisive memory.</p></div>
-          <div class="timeline-block"><h3>UNCERTAIN</h3><p>The trade is flagged for specialist review.</p></div>
-          <div class="timeline-block"><h3>SPECIALIST AGENT</h3><p>Returns risk, a recommended maximum size, and rationale.</p></div>
-          <div class="timeline-block"><h3>FINAL DECISION</h3><p>ALLOW, DENY, or SAFER TERMS, with the analysis attached.</p></div>
+      <div class="section-body" style="max-width:none">
+        <p class="problem-lead" style="max-width:44rem">When Scar needs additional information, it can request specialist analysis from another agent before its final decision. The specialist advises; Scar decides.</p>
+        <div class="session-flow" style="margin-top:2rem">
+          <div class="session-ticket">
+            <div class="session-stamp">CURRENT TRADE</div>
+            <p>You initiate a swap.</p>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">SCAR</div>
+            <p>Evaluates conditions but lacks decisive memory.</p>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">UNCERTAIN</div>
+            <p>The trade is flagged for specialist review.</p>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">SPECIALIST AGENT</div>
+            <p>Returns risk, a recommended maximum size, and rationale.</p>
+          </div>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">FINAL DECISION</div>
+            <p>ALLOW, DENY, or SAFER TERMS, with the analysis attached.</p>
+          </div>
         </div>
-        <div id="specialist-live" class="note">Checking specialist availability…</div>
+        <div id="specialist-live" class="note" style="margin-top:1.5rem">Checking specialist availability…</div>
       </div>
     </section>
 
@@ -110,19 +171,17 @@
         <h2 class="section-title">THE NEXT DECISION IS SHAPED BY THE LAST OUTCOME.</h2>
       </div>
       <div class="section-body">
-        <div class="loop">
-          <div class="loop-item"><span class="label">TRADE</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">MEMORY</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">DECISION</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">WALLET</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">UNISWAP</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">BASE</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">OUTCOME</span></div><div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">MEMORY</span></div>
+        <div class="loop-pills">
+          <span class="loop-pill">TRADE</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">MEMORY</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">DECISION</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">WALLET</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">UNISWAP</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">BASE</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill">OUTCOME</span><span class="loop-sep" aria-hidden="true">→</span>
+          <span class="loop-pill loop-pill-memory">MEMORY</span>
         </div>
-        <div class="cta-actions" style="justify-content:flex-start;margin-top:2rem">
-          <a class="btn btn-primary" href="/trade.html">Start trading</a>
-        </div>
+        <p class="session-cta"><a class="btn btn-primary btn-pill" href="/trade.html">Start trading</a></p>
       </div>
     </section>
 
