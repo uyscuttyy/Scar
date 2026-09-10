@@ -484,12 +484,14 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
 #your-scars .memory-card:has(.memory-badge.failed) { border-left: 3px solid var(--danger); }
 #your-scars .memory-card:has(.memory-badge.good) { border-left: 3px solid var(--success); }
 
-/* Execution loop: one line, lilac memory pills */
-.loop-pills { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.6rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem; }
+/* Execution loop: one line, equal weight, full width, lilac memory pills */
+#execution-loop .section-body { max-width: none; }
+.loop-pills { display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; }
 .loop-pill {
-  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; white-space: nowrap;
+  flex: 1 1 0; text-align: center;
+  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;
   background: var(--card); border: 1px solid var(--border);
-  border-radius: 999px; padding: 0.5rem 1.1rem;
+  border-radius: 999px; padding: 0.6rem 0.4rem;
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 .loop-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -18px rgba(35, 33, 29, 0.5); }
@@ -497,6 +499,11 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
   background: rgba(122, 104, 196, 0.12); color: var(--accent-deep); border-color: rgba(122, 104, 196, 0.45);
 }
 .loop-sep { color: var(--muted); flex-shrink: 0; }
+@media (max-width: 700px) {
+  .loop-pills { gap: 0.3rem; }
+  .loop-pill { font-size: 0.6rem; letter-spacing: 0.03em; padding: 0.45rem 0.15rem; }
+  .loop-sep { font-size: 0.7rem; }
+}
 
 /* Transaction status */
 .tx-status { padding: 1rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-top: 1rem; background: var(--paper); }
