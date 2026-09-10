@@ -338,10 +338,66 @@ input:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px r
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); border: 1px dashed var(--border); border-radius: var(--radius); }
 .empty-icon { font-size: 2rem; margin-bottom: 0.75rem; opacity: 0.6; }
 
-/* Steps / progression / timeline */
+/* Problem: oversized ghost numerals, rail-connected phase cards */
+.problem-body { max-width: 64rem; }
+.problem-lead { font-size: 1.2rem; line-height: 1.7; max-width: 44rem; }
+.problem-lead::first-line { font-weight: 700; color: var(--ink); }
+.phases { margin-top: 2.5rem; }
+.phase { display: grid; grid-template-columns: auto 1fr; gap: 1.5rem; align-items: start; }
+.phase-num {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: clamp(3rem, 7vw, 5rem); line-height: 1;
+  color: transparent; -webkit-text-stroke: 1.5px var(--border);
+  user-select: none;
+}
+.phase-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 1.5rem 1.75rem;
+  box-shadow: 0 14px 36px -20px rgba(35, 33, 29, 0.3);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.phase-card:hover { transform: translateY(-3px); box-shadow: 0 20px 44px -20px rgba(35, 33, 29, 0.35); }
+.phase-card h3 { font-size: 0.78rem; letter-spacing: 0.18em; color: var(--accent-deep); margin: 0 0 0.5rem; }
+.phase-card p { margin: 0; font-size: 1.05rem; color: var(--ink); }
+.phase-card-final { background: var(--ink); border-color: var(--ink); }
+.phase-card-final h3 { color: var(--paper); opacity: 0.7; }
+.phase-card-final p { color: var(--paper); }
+.phases-rail { display: flex; justify-content: flex-start; padding: 0.35rem 0 0.35rem clamp(1rem, 3vw, 2.2rem); }
+.phases-rail span { display: block; width: 2px; height: 1.6rem; background: var(--border); }
+@media (max-width: 560px) {
+  .phase { grid-template-columns: 1fr; gap: 0.4rem; }
+  .phase-num { font-size: 2.4rem; }
+  .phases-rail { padding-left: 0.5rem; }
+}
+
+/* Memory-behavior: session tickets with stamp + verdict card */
+.session-flow { display: grid; gap: 0; margin-top: 1rem; }
+.session-ticket {
+  position: relative; background: var(--card);
+  border: 1px solid var(--border); border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+}
+.session-ticket p { margin: 0.4rem 0; }
+.session-stamp {
+  display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.2em;
+  color: var(--paper); background: var(--ink);
+  padding: 0.3rem 0.8rem; border-radius: 999px; margin-bottom: 0.6rem;
+}
+.session-arrow { text-align: center; color: var(--muted); font-size: 1.4rem; line-height: 1; padding: 0.55rem 0; }
+.session-verdict { border: 2px solid var(--danger); background: rgba(179, 55, 47, 0.05); }
+.session-verdict .session-stamp { background: var(--danger); }
+@media (min-width: 900px) {
+  .session-flow { grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; }
+  .session-arrow { align-self: center; padding: 0 0.7rem; }
+}
+
+/* Steps: larger numerals, hover row highlight */
+.step { transition: background var(--transition); border-radius: var(--radius-sm); }
+.step:hover { background: rgba(255, 255, 255, 0.55); }
+.step-number { font-size: 2rem; }
 .steps { display: grid; gap: 0; }
 .step { display: grid; grid-template-columns: 4rem 1fr; gap: 1.25rem; padding: 1.5rem 0; border-top: 1px solid var(--hairline); }
-.step-number { font-family: var(--font-display); font-size: 1.5rem; color: var(--muted); }
+.step-number { font-family: var(--font-display); font-size: 2rem; color: var(--muted); }
 .step-content h3 { margin: 0 0 0.3rem; font-size: 1.05rem; }
 .step-content p { margin: 0; }
 .progression .step { display: block; padding: 1.25rem 0; }

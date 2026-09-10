@@ -73,22 +73,31 @@
         <div class="section-eyebrow">THE PROBLEM</div>
         <h2 class="section-title">MOST BOTS SEE DATA.<br>SCAR REMEMBERS EXPERIENCES.</h2>
       </div>
-      <div class="section-body">
-        <p>A normal trading system can see prices, liquidity and current market conditions. Scar also remembers what happened to you before.</p>
-        <div class="progression">
-          <div class="step">
-            <h3>WHAT HAPPENED</h3>
-            <p>A trade executes under bad conditions and produces a loss.</p>
+      <div class="section-body problem-body">
+        <p class="problem-lead">A normal trading system can see prices, liquidity and current market conditions. Scar also remembers what happened to you before.</p>
+        <div class="phases">
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">01</div>
+            <div class="phase-card">
+              <h3>WHAT HAPPENED</h3>
+              <p>A trade executes under bad conditions and produces a loss.</p>
+            </div>
           </div>
-          <div class="arrow">↓</div>
-          <div class="step">
-            <h3>WHAT SCAR REMEMBERS</h3>
-            <p>The experience is stored as memory, scoped to your wallet.</p>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">02</div>
+            <div class="phase-card">
+              <h3>WHAT SCAR REMEMBERS</h3>
+              <p>The experience is stored as memory, scoped to your wallet.</p>
+            </div>
           </div>
-          <div class="arrow">↓</div>
-          <div class="step">
-            <h3>WHAT SCAR DOES NEXT</h3>
-            <p>A repeat attempt is denied, or offered on safer terms.</p>
+          <div class="phases-rail" aria-hidden="true"><span></span></div>
+          <div class="phase">
+            <div class="phase-num" aria-hidden="true">03</div>
+            <div class="phase-card phase-card-final">
+              <h3>WHAT SCAR DOES NEXT</h3>
+              <p>A repeat attempt is denied, or offered on safer terms.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -100,18 +109,20 @@
         <h2 class="section-title">SCAR DOESN’T JUST REMEMBER.<br>IT CHANGES WHAT HAPPENS NEXT.</h2>
       </div>
       <div class="section-body">
-        <div class="timeline">
-          <div class="timeline-block">
-            <h3>SESSION 01</h3>
+        <div class="session-flow">
+          <div class="session-ticket">
+            <div class="session-stamp">SESSION 01</div>
             <p>You make a trade. The transaction produces a meaningful experience. Scar evaluates it.</p>
             <p><span class="badge badge-failed">Important experience → stored in memory.</span></p>
           </div>
-          <div class="timeline-block">
-            <h3>NEW SESSION</h3>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket">
+            <div class="session-stamp">NEW SESSION</div>
             <p>You return later. Same wallet. Similar trade. Scar retrieves the previous experience.</p>
           </div>
-          <div class="timeline-block">
-            <h3>DECISION</h3>
+          <div class="session-arrow" aria-hidden="true">→</div>
+          <div class="session-ticket session-verdict">
+            <div class="session-stamp">DECISION</div>
             <p>Current conditions resemble the previous situation.</p>
             <p><span class="decision deny">DENY</span></p>
             <p class="outcome">No transaction submitted.</p>
@@ -134,22 +145,6 @@
           <div class="step"><div class="step-number">04</div><div class="step-content"><h3>Scar decides</h3><p>ALLOW, DENY, or SAFER TERMS.</p></div></div>
           <div class="step"><div class="step-number">05</div><div class="step-content"><h3>Scar learns</h3><p>Important outcomes become future experience.</p></div></div>
         </div>
-      </div>
-    </section>
-
-    <section class="section" id="scars-preview">
-      <div class="section-header">
-        <div class="section-eyebrow">YOUR SCARS</div>
-        <h2 class="section-title">EVERY IMPORTANT TRADE LEAVES A SCAR.</h2>
-      </div>
-      <div class="section-body">
-        <div id="scars-preview-list" class="scars-list"></div>
-        <div id="scars-preview-empty" class="empty-state">
-          <div class="empty-icon">🧠</div>
-          <p>NO SCARS YET.</p>
-          <p>Scar will remember the experiences that matter.</p>
-        </div>
-        <p><a href="/scars.html">See all your scars →</a></p>
       </div>
     </section>
 
