@@ -3,44 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>SCAR: Memory-Aware Swap</title>
+  <title>SCAR: Your mistakes should only happen once</title>
+  <meta name="description" content="Scar remembers your past trading experiences and uses them to decide your next trade. ALLOW, DENY, or SAFER TERMS on Base Sepolia via Uniswap.">
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=7">
+  <link rel="stylesheet" href="/css/app.css?v=8">
 </head>
-<body>
+<body data-page="landing">
   <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
 
-  <div class="container">
-    <!-- Header -->
-    <header class="site-header">
-      <div class="header-inner">
-        <div class="logo">SCAR</div>
-        <nav class="main-nav">
-          <button class="nav-link" data-target="#how-it-works">How it works</button>
-          <button class="nav-link" data-target="#your-scars">Your Scars</button>
-          <button class="nav-link nav-cta" data-target="#trade">Start trading</button>
-        </nav>
-        <div class="wallet-button" id="wallet-button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="/index.html">SCAR</a></div>
+      <nav class="main-nav" aria-label="Primary">
+        <a class="nav-link" href="/how.html">How it works</a>
+        <a class="nav-link" href="/scars.html">Your Scars</a>
+        <a class="nav-link nav-cta" href="/trade.html">Start trading</a>
+      </nav>
+      <div class="wallet-wrap">
+        <button class="wallet-button" id="wallet-button" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
           <span id="wallet-label">Connect Wallet</span>
-        </div>
+        </button>
+        <div class="wallet-menu" id="wallet-menu" hidden></div>
       </div>
-    </header>
+    </div>
+    <div class="wallet-status" id="wallet-status" role="status"></div>
+  </header>
 
-    <!-- Hero -->
+  <div class="container">
     <section class="hero" id="hero">
       <div class="hero-content">
         <div class="eyebrow">SCAR</div>
         <h1 class="hero-title">YOUR MISTAKES SHOULD ONLY HAPPEN ONCE.</h1>
-        <p class="hero-text">Scar remembers your past trading experiences, compares them with the trade you’re about to make, and uses what happened before to decide what happens next.</p>
+        <p class="hero-text">Scar remembers your past trading experiences, compares them with the trade you are about to make, and uses what happened before to decide what happens next.</p>
         <div class="hero-actions">
-          <button class="btn btn-primary" id="btn-start-trade">Start trading</button>
-          <button class="btn btn-secondary" id="btn-see-how">See how it works</button>
+          <a class="btn btn-primary" href="/trade.html">Start trading</a>
+          <a class="btn btn-secondary" href="/how.html">See how it works</a>
         </div>
         <div class="hero-demo">
-          <div class="demo-card">
+          <div class="demo-card" aria-live="polite">
             <div class="demo-header">SCAR REVIEW</div>
-            <div class="demo-row"><span class="demo-label">USDC → WETH</span><span class="demo-value">$500</span></div>
+            <div class="demo-row"><span class="demo-label" id="demo-pair-label">USDC → WETH</span><span class="demo-value" id="demo-amount">--</span></div>
             <div class="demo-divider"></div>
             <div class="demo-row"><span class="demo-label">Current conditions</span></div>
             <div class="demo-row"><span class="demo-label">Slippage</span><span class="demo-value" id="demo-slippage">--</span></div>
@@ -50,99 +53,40 @@
             <div class="demo-row"><span class="demo-label">Similar trade</span><span class="demo-value" id="demo-previous">No trade reviewed yet</span></div>
             <div class="demo-divider"></div>
             <div class="demo-row"><span class="demo-label">SCAR’S DECISION</span></div>
-            <div class="demo-row"><span class="demo-label" id="demo-decision">Review a swap below to see Scar decide</span></div>
-            <button class="demo-btn" id="demo-try-safer">Try safer terms</button>
+            <div class="demo-row"><span class="demo-label" id="demo-decision">Review a swap to see Scar decide</span></div>
+            <a class="demo-btn" href="/trade.html" style="display:block;text-align:center;text-decoration:none">Try safer terms</a>
           </div>
         </div>
+        <p class="note" id="demo-source-note" style="margin-top:1rem">Connect a wallet and review a swap to see a live decision here.</p>
       </div>
     </section>
 
-    <!-- Trade: the real product UI, embedded in the page -->
-    <section class="section" id="trade">
-      <div class="section-header">
-        <div class="section-eyebrow">TRADE</div>
-        <h2 class="section-title">TELL SCAR WHAT YOU WANT TO TRADE.</h2>
-      </div>
-      <div class="section-body">
-        <div class="trade-grid">
-          <div class="trade-card">
-            <div class="field">
-              <label for="from-amount">From</label>
-              <div class="input-row">
-                <input id="from-amount" type="number" placeholder="0.00" step="0.000001" min="0" aria-label="Amount to swap">
-                <button id="from-token-btn" class="token-selector" type="button" aria-label="Select from token">
-                  <span style="font-size:1.25rem">💵</span>
-                  <span><span class="token-symbol">USDC</span><br><span class="token-name">USD Coin</span></span>
-                </button>
-              </div>
-            </div>
-            <div class="swap-arrow-row">
-              <button id="swap-arrow" class="swap-arrow" type="button" aria-label="Swap tokens" title="Swap">⇅</button>
-            </div>
-            <div class="field">
-              <label>To</label>
-              <button id="to-token-btn" class="token-selector" type="button" style="width:100%" aria-label="Select to token">
-                <span style="font-size:1.25rem">🔷</span>
-                <span><span class="token-symbol">WETH</span><br><span class="token-name">Wrapped Ether</span></span>
-              </button>
-            </div>
-            <div id="quote-loading" style="display:none;align-items:center;gap:0.75rem;margin:1rem 0">Fetching quote…</div>
-            <div id="quote-error" class="error-banner" style="display:none"></div>
-            <button id="btn-review" class="btn btn-primary" style="width:100%;margin-top:1rem" disabled>Review swap</button>
-            <p class="note">Connect a wallet to trade. Scar checks memory before anything is submitted.</p>
-          </div>
-          <div class="trade-card" id="decision-card">
-            <div class="demo-header">SCAR REVIEW</div>
-            <div id="decision-banner" class="decision-banner" role="alert">
-              <div id="decision-icon" class="decision-icon"></div>
-              <div class="decision-content">
-                <div id="decision-title-text" class="decision-title">No trade reviewed yet</div>
-                <div id="decision-message" class="decision-message">Enter an amount and review the swap. Scar will compare it with your past experiences.</div>
-              </div>
-            </div>
-            <div id="decision-details" class="decision-details"></div>
-            <div id="decision-memory" style="display:none"></div>
-            <div id="decision-specialist" style="display:none"></div>
-            <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
-              <button id="btn-confirm-swap" class="btn btn-primary" style="display:none">Confirm swap</button>
-              <button id="btn-back-to-swap" class="btn btn-secondary">Adjust swap</button>
-            </div>
-            <div id="tx-status" class="tx-status" style="display:none">
-              <div class="tx-status-title"></div>
-              <div class="tx-hash"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Problem -->
     <section class="section" id="problem">
       <div class="section-header">
         <div class="section-eyebrow">THE PROBLEM</div>
         <h2 class="section-title">MOST BOTS SEE DATA.<br>SCAR REMEMBERS EXPERIENCES.</h2>
       </div>
       <div class="section-body">
+        <p>A normal trading system can see prices, liquidity and current market conditions. Scar also remembers what happened to you before.</p>
         <div class="progression">
           <div class="step">
             <h3>WHAT HAPPENED</h3>
-            <p>A trade executes with unfavorable conditions (high slippage, price impact) leading to a loss.</p>
+            <p>A trade executes under bad conditions and produces a loss.</p>
           </div>
           <div class="arrow">↓</div>
           <div class="step">
             <h3>WHAT SCAR REMEMBERS</h3>
-            <p>Scar stores the experience as a meaningful memory tied to the wallet and trade conditions.</p>
+            <p>The experience is stored as memory, scoped to your wallet.</p>
           </div>
           <div class="arrow">↓</div>
           <div class="step">
             <h3>WHAT SCAR DOES NEXT</h3>
-            <p>When a similar trade is attempted, Scar recalls the memory and can block or suggest safer terms.</p>
+            <p>A repeat attempt is denied, or offered on safer terms.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Memory changes behavior -->
     <section class="section" id="memory-behavior">
       <div class="section-header">
         <div class="section-eyebrow">MEMORY CHANGES BEHAVIOR</div>
@@ -152,241 +96,70 @@
         <div class="timeline">
           <div class="timeline-block">
             <h3>SESSION 01</h3>
-            <p>User makes a trade.</p>
-            <p>The transaction produces a meaningful experience.</p>
-            <p>Scar evaluates it.</p>
-            <p><span class="badge badge-important">Important experience → stored in memory.</span></p>
+            <p>You make a trade. The transaction produces a meaningful experience. Scar evaluates it.</p>
+            <p><span class="badge badge-failed">Important experience → stored in memory.</span></p>
           </div>
-          <div class="timeline-divider"></div>
           <div class="timeline-block">
             <h3>NEW SESSION</h3>
-            <p>User returns later.</p>
-            <p>Same wallet.</p>
-            <p>Similar trade.</p>
-            <p>Scar retrieves the previous experience.</p>
+            <p>You return later. Same wallet. Similar trade. Scar retrieves the previous experience.</p>
           </div>
-          <div class="timeline-divider"></div>
           <div class="timeline-block">
             <h3>DECISION</h3>
-            <p>Scar detects that the current conditions resemble the previous situation.</p>
+            <p>Current conditions resemble the previous situation.</p>
             <p><span class="decision deny">DENY</span></p>
-            <p><span class="outcome">No transaction submitted.</span></p>
+            <p class="outcome">No transaction submitted.</p>
           </div>
         </div>
+        <p><a href="/how.html">Read the full breakdown →</a></p>
       </div>
     </section>
 
-    <!-- How it works -->
-    <section class="section" id="how-it-works">
+    <section class="section" id="steps-preview">
       <div class="section-header">
         <div class="section-eyebrow">HOW IT WORKS</div>
-        <h2 class="section-title">A simple loop that protects you from repeating mistakes.</h2>
-      </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">01</div>
-          <div class="step-content">
-            <h3>Make a trade</h3>
-            <p>Tell Scar what you want to trade.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-number">02</div>
-          <div class="step-content">
-            <h3>Scar remembers</h3>
-            <p>Scar retrieves relevant experiences from your previous trades.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-number">03</div>
-          <div class="step-content">
-            <h3>Scar compares</h3>
-            <p>Current conditions are compared with what happened before.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-number">04</div>
-          <div class="step-content">
-            <h3>Scar decides</h3>
-            <p>ALLOW, DENY, or SAFER TERMS.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-number">05</div>
-          <div class="step-content">
-            <h3>Scar learns</h3>
-            <p>Important outcomes become future experience.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Condition-aware memory -->
-    <section class="section" id="condition-aware">
-      <div class="section-header">
-        <div class="section-eyebrow">CONDITION-AWARE MEMORY</div>
-        <h2 class="section-title">Scar remembers context, not just events.</h2>
+        <h2 class="section-title">FIVE STEPS BETWEEN YOU AND A REPEAT MISTAKE.</h2>
       </div>
       <div class="section-body">
-        <div class="comparison">
-          <div class="comparison-column">
-            <h3>PREVIOUS EXPERIENCE</h3>
-            <div class="comparison-item"><span class="label">USDC → WETH</span><span class="value">$100</span></div>
-            <div class="comparison-item"><span class="label">Slippage</span><span class="value">High</span></div>
-            <div class="comparison-item"><span class="label">Price impact</span><span class="value">High</span></div>
-            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
-          </div>
-          <div class="comparison-column vs">
-            <div class="vs-label">CURRENT TRADE</div>
-          </div>
-          <div class="comparison-column">
-            <h3>CURRENT TRADE</h3>
-            <div class="comparison-item"><span class="label">USDC → WETH</span><span class="value">$100</span></div>
-            <div class="comparison-item"><span class="label">Slippage</span><span class="value">Similar</span></div>
-            <div class="comparison-item"><span class="label">Price impact</span><span class="value">Similar</span></div>
-            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
-          </div>
-          <div class="comparison-column arrow">
-            <div class="arrow-box">↓</div>
-          </div>
-          <div class="comparison-column">
-            <h3>SCAR</h3>
-            <div class="decision deny">DENY</div>
-          </div>
-        </div>
-        <div class="divider"></div>
-        <div class="comparison">
-          <div class="comparison-column">
-            <h3>PREVIOUS EXPERIENCE</h3>
-            <div class="comparison-item"><span class="label">USDC → WETH</span><span class="value">$100</span></div>
-            <div class="comparison-item"><span class="label">Slippage</span><span class="value">High</span></div>
-            <div class="comparison-item"><span class="label">Price impact</span><span class="value">High</span></div>
-            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
-          </div>
-          <div class="comparison-column vs">
-            <div class="vs-label">CURRENT TRADE</div>
-          </div>
-          <div class="comparison-column">
-            <h3>CURRENT TRADE</h3>
-            <div class="comparison-item"><span class="label">USDC → WETH</span><span class="value">$100</span></div>
-            <div class="comparison-item"><span class="label">Slippage</span><span class="value">Much better</span></div>
-            <div class="comparison-item"><span class="label">Price impact</span><span class="value">Much better</span></div>
-            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-good">Good execution</span></div>
-          </div>
-          <div class="comparison-column arrow">
-            <div class="arrow-box">↓</div>
-          </div>
-          <div class="comparison-column">
-            <h3>SCAR</h3>
-            <div class="decision allow">ALLOW</div>
-          </div>
+        <div class="steps">
+          <div class="step"><div class="step-number">01</div><div class="step-content"><h3>Make a trade</h3><p>Tell Scar what you want to trade.</p></div></div>
+          <div class="step"><div class="step-number">02</div><div class="step-content"><h3>Scar remembers</h3><p>Relevant experiences are retrieved from your previous trades.</p></div></div>
+          <div class="step"><div class="step-number">03</div><div class="step-content"><h3>Scar compares</h3><p>Current conditions are compared with what happened before.</p></div></div>
+          <div class="step"><div class="step-number">04</div><div class="step-content"><h3>Scar decides</h3><p>ALLOW, DENY, or SAFER TERMS.</p></div></div>
+          <div class="step"><div class="step-number">05</div><div class="step-content"><h3>Scar learns</h3><p>Important outcomes become future experience.</p></div></div>
         </div>
       </div>
     </section>
 
-    <!-- Your Scars -->
-    <section class="section" id="your-scars">
+    <section class="section" id="scars-preview">
       <div class="section-header">
         <div class="section-eyebrow">YOUR SCARS</div>
         <h2 class="section-title">EVERY IMPORTANT TRADE LEAVES A SCAR.</h2>
       </div>
       <div class="section-body">
-        <div id="scars-list" class="scars-list">
-          <!-- memories will be injected here -->
-        </div>
-        <div id="scars-empty" class="empty-state">
+        <div id="scars-preview-list" class="scars-list"></div>
+        <div id="scars-preview-empty" class="empty-state">
           <div class="empty-icon">🧠</div>
           <p>NO SCARS YET.</p>
           <p>Scar will remember the experiences that matter.</p>
         </div>
+        <p><a href="/scars.html">See all your scars →</a></p>
       </div>
     </section>
 
-    <!-- When scar isn't sure -->
-    <section class="section" id="uncertain">
-      <div class="section-header">
-        <div class="section-eyebrow">WHEN SCAR ISN’T SURE</div>
-        <h2 class="section-title">IT CAN ASK FOR HELP.</h2>
-      </div>
-      <div class="section-body">
-        <div class="timeline">
-          <div class="timeline-block">
-            <h3>CURRENT TRADE</h3>
-            <p>User initiates a swap.</p>
-          </div>
-          <div class="timeline-divider"></div>
-          <div class="timeline-block">
-            <h3>SCAR</h3>
-            <p>Evaluates conditions but lacks decisive memory.</p>
-          </div>
-          <div class="timeline-divider"></div>
-          <div class="timeline-block">
-            <h3>UNCERTAIN</h3>
-            <p>Scar flags the trade for specialist review.</p>
-          </div>
-          <div class="timeline-divider"></div>
-          <div class="timeline-block">
-            <h3>SPECIALIST AGENT</h3>
-            <p>Provides additional analysis (risk, max size, rationale).</p>
-          </div>
-          <div class="timeline-divider"></div>
-          <div class="timeline-block">
-            <h3>SCAR</h3>
-            <p>Incorporates the analysis.</p>
-          </div>
-          <div class="timeline-divider"></div>
-          <div class="timeline-block">
-            <h3>FINAL DECISION</h3>
-            <p>ALLOW, DENY, or SAFER TERMS with added confidence.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Execution loop -->
-    <section class="section" id="execution-loop">
-      <div class="section-header">
-        <div class="section-eyebrow">THE EXECUTION LOOP</div>
-        <h2 class="section-title">How memory informs every decision.</h2>
-      </div>
-      <div class="section-body">
-        <div class="loop">
-          <div class="loop-item"><span class="label">TRADE</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">MEMORY</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">DECISION</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">WALLET</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">UNISWAP</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">BASE</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">OUTCOME</span></div>
-          <div class="loop-arrow">↓</div>
-          <div class="loop-item"><span class="label">MEMORY</span></div>
-        </div>
-        <p class="loop-note">The next decision is influenced by the previous experience.</p>
-      </div>
-    </section>
-
-    <!-- Final CTA -->
     <section class="section cta-section" id="final-cta">
       <div class="section-header">
-        <div class="section-eyebrow">FINAL</div>
+        <div class="section-eyebrow">START</div>
         <h2 class="section-title">MAKE THE MISTAKE ONCE.<br>NOT TWICE.</h2>
       </div>
       <div class="section-body">
         <p class="cta-text">Scar remembers what happened before so your next trade can be different.</p>
         <div class="cta-actions">
-          <button class="btn btn-primary" id="btn-final-start">Start trading</button>
-          <button class="btn btn-secondary" id="btn-final-scars">See your scars</button>
+          <a class="btn btn-primary" href="/trade.html">Start trading</a>
+          <a class="btn btn-secondary" href="/scars.html">See your scars</a>
         </div>
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="site-footer">
       <div class="footer-content">
         <div class="footer-column">
@@ -396,45 +169,31 @@
         <div class="footer-column">
           <h3>Product</h3>
           <ul>
-            <li><a href="#">Trade</a></li>
-            <li><a href="#">Your Scars</a></li>
-            <li><a href="#">How it works</a></li>
+            <li><a href="/trade.html">Trade</a></li>
+            <li><a href="/scars.html">Your Scars</a></li>
+            <li><a href="/how.html">How it works</a></li>
           </ul>
         </div>
         <div class="footer-column">
           <h3>Technology</h3>
           <ul>
-            <li><a href="#">Sibyl</a></li>
-            <li><a href="#">Virtuals</a></li>
-            <li><a href="#">Base</a></li>
-            <li><a href="#">Uniswap</a></li>
+            <li><span>Sibyl memory</span></li>
+            <li><span>Virtuals ACP</span></li>
+            <li><span>Base Sepolia</span></li>
+            <li><span>Uniswap v3</span></li>
           </ul>
         </div>
         <div class="footer-column">
           <h3>Verify</h3>
           <ul>
             <li><a href="https://github.com/uyscuttyy/Scar">GitHub</a></li>
-            <li><a href="#">Documentation</a></li>
+            <li><a href="https://sepolia.basescan.org">Base Sepolia explorer</a></li>
           </ul>
         </div>
       </div>
     </footer>
   </div>
 
-  <!-- Token Modal (reuse) -->
-  <div id="token-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 id="token-modal-title">Select Token</h3>
-        <button class="btn-ghost" onclick="document.getElementById('token-modal').classList.remove('active')" aria-label="Close">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="token-modal-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
     <div class="loading-box">
       <span class="spinner" style="width:1.5rem;height:1.5rem;border-width:3px"></span>
@@ -442,6 +201,6 @@
     </div>
   </div>
 
-  <script src="/js/app.js?v=7"></script>
+  <script src="/js/app.js?v=8"></script>
 </body>
 </html>

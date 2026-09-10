@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trade — SCAR</title>
+  <meta name="description" content="Tell Scar what you want to trade. Scar checks your memory before anything is submitted.">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css?v=8">
+</head>
+<body data-page="trade">
+  <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="/index.html">SCAR</a></div>
+      <nav class="main-nav" aria-label="Primary">
+        <a class="nav-link" href="/how.html">How it works</a>
+        <a class="nav-link" href="/scars.html">Your Scars</a>
+        <a class="nav-link nav-cta active" href="/trade.html">Start trading</a>
+      </nav>
+      <div class="wallet-wrap">
+        <button class="wallet-button" id="wallet-button" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+          <span id="wallet-label">Connect Wallet</span>
+        </button>
+        <div class="wallet-menu" id="wallet-menu" hidden></div>
+      </div>
+    </div>
+    <div class="wallet-status" id="wallet-status" role="status"></div>
+  </header>
+
+  <div class="container">
+    <section class="section" id="trade">
+      <div class="section-header">
+        <div class="section-eyebrow">TRADE</div>
+        <h2 class="section-title">TELL SCAR WHAT YOU WANT TO TRADE.</h2>
+      </div>
+      <div class="section-body" style="max-width:64rem">
+        <div class="trade-grid">
+          <div class="trade-card">
+            <div class="field">
+              <label for="from-amount">From</label>
+              <div class="input-row">
+                <input id="from-amount" type="number" placeholder="0.00" step="0.000001" min="0" aria-label="Amount to swap">
+                <button id="from-token-btn" class="token-selector" type="button" aria-label="Select from token">
+                  <span style="font-size:1.25rem">💵</span>
+                  <span><span class="token-symbol">USDC</span><br><span class="token-name">USD Coin</span></span>
+                </button>
+              </div>
+            </div>
+            <div class="swap-arrow-row">
+              <button id="swap-arrow" class="swap-arrow" type="button" aria-label="Swap tokens" title="Swap">⇅</button>
+            </div>
+            <div class="field">
+              <label>To</label>
+              <button id="to-token-btn" class="token-selector" type="button" style="width:100%" aria-label="Select to token">
+                <span style="font-size:1.25rem">🔷</span>
+                <span><span class="token-symbol">WETH</span><br><span class="token-name">Wrapped Ether</span></span>
+              </button>
+            </div>
+            <div id="quote-loading" style="display:none;align-items:center;gap:0.75rem;margin:1rem 0">Fetching quote…</div>
+            <div id="quote-error" class="error-banner" style="display:none"></div>
+            <button id="btn-review" class="btn btn-primary" style="width:100%;margin-top:1rem" disabled>Review swap</button>
+            <p class="note">Connect a wallet to trade. Scar checks memory before anything is submitted. Nothing moves on-chain until you sign.</p>
+          </div>
+          <div class="trade-card" id="decision-card">
+            <div class="demo-header">SCAR REVIEW</div>
+            <div id="decision-banner" class="decision-banner" role="alert">
+              <div id="decision-icon" class="decision-icon"></div>
+              <div class="decision-content">
+                <div id="decision-title-text" class="decision-title">No trade reviewed yet</div>
+                <div id="decision-message" class="decision-message">Enter an amount and review the swap. Scar will compare it with your past experiences.</div>
+              </div>
+            </div>
+            <div id="decision-details" class="decision-details"></div>
+            <div id="decision-memory" style="display:none"></div>
+            <div id="decision-specialist" style="display:none"></div>
+            <div style="display:flex;gap:0.75rem;margin-top:1.5rem;flex-wrap:wrap">
+              <button id="btn-confirm-swap" class="btn btn-primary" style="display:none">Confirm swap</button>
+              <button id="btn-back-to-swap" class="btn btn-secondary">Adjust swap</button>
+            </div>
+            <div id="tx-status" class="tx-status" style="display:none">
+              <div class="tx-status-title"></div>
+              <div class="tx-hash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>SCAR</h3>
+          <p>Your trading agent that remembers.</p>
+        </div>
+        <div class="footer-column">
+          <h3>Product</h3>
+          <ul>
+            <li><a href="/trade.html">Trade</a></li>
+            <li><a href="/scars.html">Your Scars</a></li>
+            <li><a href="/how.html">How it works</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Technology</h3>
+          <ul>
+            <li><span>Sibyl memory</span></li>
+            <li><span>Virtuals ACP</span></li>
+            <li><span>Base Sepolia</span></li>
+            <li><span>Uniswap v3</span></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Verify</h3>
+          <ul>
+            <li><a href="https://github.com/uyscuttyy/Scar">GitHub</a></li>
+            <li><a href="https://sepolia.basescan.org">Base Sepolia explorer</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="token-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="token-modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="token-modal-title">Select Token</h3>
+        <button class="btn-ghost" onclick="document.getElementById('token-modal').classList.remove('active')" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="token-modal-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
+    <div class="loading-box">
+      <span class="spinner" style="width:1.5rem;height:1.5rem;border-width:3px"></span>
+      <span id="loading-text">Loading…</span>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=8"></script>
+</body>
+</html>

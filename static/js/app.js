@@ -72,6 +72,8 @@
       // Wallet button in header
       els.walletButton = $('#wallet-button');
       els.walletLabel = $('#wallet-label');
+      els.walletMenu = $('#wallet-menu');
+      els.walletStatus = $('#wallet-status');
 
       // Hero CTAs
       els.btnStartTrade = $('#btn-start-trade');
@@ -107,8 +109,19 @@
       els.txStatus = $('#tx-status');
 
       // Scars section elements
-      els.historyList = $('#scars-list');
-      els.historyEmpty = $('#scars-empty');
+      els.historyList = $('#scars-list') || $('#scars-preview-list');
+      els.historyEmpty = $('#scars-empty') || $('#scars-preview-empty');
+      els.scarsSummary = $('#scars-summary');
+      els.scarsPreviewList = $('#scars-preview-list');
+      els.scarsPreviewEmpty = $('#scars-preview-empty');
+
+      // Landing demo extras
+      els.demoPairLabel = $('#demo-pair-label');
+      els.demoAmount = $('#demo-amount');
+      els.demoSourceNote = $('#demo-source-note');
+
+      // How page
+      els.specialistLive = $('#specialist-live');
 
       // Specialist
       els.decisionSpecialist = $('#decision-specialist');
@@ -203,104 +216,9 @@
     // Update wallet displays on all screens when wallet state changes
     updateAllWalletDisplays();
 
-    // Load per-screen real data (fire and forget; each loader guards on wallet)
-    if (name === 'home') loadHomeStats();
+    // Load per-page real data (fire and forget; each loader guards on wallet)
+    if (name === 'home' || name === 'landing') loadLanding();
     if (name === 'scars') loadHistory();
-  }
-
-  // ──────────────────────────────────────────────────────────────
-  // Home screen: real stats from Sibyl, never hardcoded
-  // ──────────────────────────────────────────────────────────────
-  async function loadHomeStats() {
-    if (!state.wallet) {
-      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Connect a wallet to see your scars.';
-      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
-      if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
-      if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
-      if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'No recent trades.';
-      if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '';
-      return;
-    }
-    try {
-      const res = await fetch(`${API}/history?wallet=${state.wallet}`);
-      if (!res.ok) throw new Error('History fetch failed');
-      const data = await res.json();
-      const memories = data.memories || [];
-      if (!memories.length) {
-        if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'No scars yet.';
-        if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
-        if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
-        if (els.homeEmptyState) els.homeEmptyState.style.display = 'block';
-        if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'No recent trades.';
-        if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '';
-        return;
-      }
-      if (els.homeEmptyState) els.homeEmptyState.style.display = 'none';
-      const blockers = memories.filter(m => {
-        const o = (m.body || {}).outcome;
-        return o === 'BAD' || o === 'FAILED';
-      });
-      const recent = [...memories].sort((a, b) =>
-        String((b.body || {}).ts || '').localeCompare(String((a.body || {}).ts || '')))[0];
-      const rb = (recent && recent.body) || {};
-      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent =
-        `${memories.length} meaningful experience${memories.length === 1 ? '' : 's'} remembered.`;
-      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent =
-        `${blockers.length} poor-outcome trade${blockers.length === 1 ? '' : 's'} Scar will help you avoid repeating.`;
-      if (els.homeRecentExperience) els.homeRecentExperience.textContent =
-        `Most recent: ${rb.pair || '--'} ${rb.outcome || ''} (${fmtDate(rb.ts)}).`;
-      // Decision message
-      if (els.homeDecisionMessage) {
-        if (rb.outcome === 'GOOD') {
-          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} succeeded.`;
-        } else if (rb.outcome === 'BAD') {
-          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} had poor outcome.`;
-        } else if (rb.outcome === 'FAILED') {
-          els.homeDecisionMessage.textContent = `Last trade: ${rb.pair || ''} ${rb.direction?.toUpperCase() || ''} failed on-chain.`;
-        } else {
-          els.homeDecisionMessage.textContent = 'No recent trades.';
-        }
-      }
-      // Scar remembers list
-      if (els.homeScarRemembersList) {
-        els.homeScarRemembersList.innerHTML = '';
-        // Show up to 5 most recent memories
-        const toShow = [...memories].sort((a, b) =>
-          String((b.body || {}).ts || '').localeCompare(String((a.body || {}).ts || ''))
-        ).slice(0, 5);
-        for (const mem of toShow) {
-          const body = mem.body || {};
-          const pair = body.pair || '--';
-          const direction = body.direction ? body.direction.toUpperCase() : '';
-          const outcome = body.outcome || '--';
-          const ts = fmtDate(body.ts);
-          const importance = mem.importance || 0;
-          const card = document.createElement('div');
-          card.className = 'memory-card';
-          card.innerHTML = `
-            <div class="memory-header">
-              <span class="memory-badge ${outcome === 'GOOD' ? 'good' : outcome === 'BAD' ? 'bad' : 'failed'}">${outcome}</span>
-              <div class="memory-pair">${pair} ${direction}</div>
-            </div>
-            <div class="memory-meta">
-              <span>Importance: ${importance}</span>
-              <span>${ts}</span>
-            </div>
-          `;
-          els.homeScarRemembersList.appendChild(card);
-        }
-        if (toShow.length === 0) {
-          els.homeScarRemembersList.innerHTML = '<p class="note">No memories to show.</p>';
-        }
-      }
-    } catch (e) {
-      console.warn('Home stats load failed:', e);
-      if (els.homeMeaningfulExperiences) els.homeMeaningfulExperiences.textContent = 'Could not load memories.';
-      if (els.homeAvoidedTrades) els.homeAvoidedTrades.textContent = '';
-      if (els.homeRecentExperience) els.homeRecentExperience.textContent = '';
-      if (els.homeDecisionMessage) els.homeDecisionMessage.textContent = 'Could not load decision.';
-      if (els.homeScarRemembersList) els.homeScarRemembersList.innerHTML = '<p class="note">Error loading memories.</p>';
-    }
   }
 
   function setLoading(on, text = 'Loading…') {
@@ -398,14 +316,33 @@
   // ──────────────────────────────────────────────────────────────
   // Wallet Connection
   // ──────────────────────────────────────────────────────────────
-  // Wallet providers: EIP-6963 discovery + legacy fallback.
-  // Multiple extensions fight over window.ethereum; discovery lets
-  // the user pick the wallet that actually holds their funds.
+  // EIP-6963 discovery + legacy fallback. The header button is the only
+  // wallet control on every page. Every failure names its cause and fix.
   // ──────────────────────────────────────────────────────────────
+  const PAGE = (document.body && document.body.dataset.page) || 'landing';
+  const LAST_WALLET_KEY = 'scar.lastWallet';
   const discovered = []; // { info, provider }
 
   function eth() {
     return state.provider || window.ethereum;
+  }
+
+  function setWalletStatus(msg, kind) {
+    if (!els.walletStatus) return;
+    els.walletStatus.textContent = msg || '';
+    els.walletStatus.dataset.kind = kind || '';
+    els.walletStatus.style.display = msg ? 'block' : 'none';
+  }
+
+  function providerChoices() {
+    const out = [...discovered];
+    if (window.ethereum && !out.some(d => d.provider === window.ethereum)) {
+      const name = window.ethereum.isMetaMask ? 'MetaMask'
+        : window.ethereum.isCoinbaseWallet ? 'Coinbase Wallet'
+        : window.ethereum.isPhantom ? 'Phantom' : 'Browser wallet';
+      out.push({ info: { name, uuid: 'legacy' }, provider: window.ethereum });
+    }
+    return out;
   }
 
   function discoverProviders() {
@@ -415,115 +352,132 @@
       if (!info || !provider) return;
       if (discovered.some(d => d.info.uuid === info.uuid)) return;
       discovered.push({ info, provider });
-      renderWalletPicker();
+      renderWalletMenu();
+      refreshWalletStatus();
     });
-    window.dispatchEvent(new Event('eip6963:requestProvider'));
+    try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch {}
   }
 
-  function renderWalletPicker() {
-    const box = document.getElementById('wallet-picker');
-    if (!box) {
-      // No picker slot on this layout; the Home connect button is the default path.
-      return;
-    }
-    box.innerHTML = '';
-    if (!discovered.length) return; // legacy single-button path
-    discovered.forEach(({ info, provider }) => {
-      const b = document.createElement('button');
-      b.className = 'btn btn-secondary';
-      b.style.cssText = 'width:100%;margin-top:0.5rem';
-      b.textContent = `Connect ${info.name}`;
-      b.addEventListener('click', () => {
-        state.provider = provider;
-        connectWallet();
+  function renderWalletMenu() {
+    const menu = els.walletMenu;
+    if (!menu) return;
+    const choices = providerChoices();
+    menu.innerHTML = '';
+    if (!state.wallet && choices.length > 1) {
+      choices.forEach(({ info, provider }) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'wallet-menu-item';
+        b.textContent = `Connect ${info.name}`;
+        b.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          menu.hidden = true;
+          state.provider = provider;
+          connectWallet();
+        });
+        menu.appendChild(b);
       });
-      box.appendChild(b);
-    });
-    if (els.homeBtnConnect && discovered.length) els.homeBtnConnect.textContent = 'Connect (default wallet)';
+    }
   }
 
-  function showProviderInfo() {
-    const el = document.getElementById('provider-info');
-    if (!el) return;
-    const names = discovered.map(d => d.info.name);
-    const eth = window.ethereum;
-    if (typeof eth === 'undefined' && !names.length) {
-      el.textContent = 'provider: none detected';
+  function refreshWalletStatus() {
+    if (state.wallet) {
+      setWalletStatus(
+        state.chainId === CHAIN_ID
+          ? `Connected ${fmtAddr(state.wallet)} on Base Sepolia.`
+          : `Connected ${fmtAddr(state.wallet)}, but on chain ${state.chainId}. Scar needs Base Sepolia.`,
+        state.chainId === CHAIN_ID ? 'ok' : 'warn'
+      );
       return;
     }
-    const flags = [...names];
-    if (eth) {
-      if (eth.isMetaMask && !flags.includes('MetaMask')) flags.push('MetaMask');
-      if (eth.isCoinbaseWallet) flags.push('Coinbase');
-      if (eth.isBraveWallet) flags.push('Brave');
-      if (eth.isPhantom) flags.push('Phantom');
+    const choices = providerChoices();
+    if (!choices.length) {
+      setWalletStatus('No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload.', 'warn');
+    } else {
+      setWalletStatus(`Found ${choices.map(c => c.info.name).join(', ')}. Click Connect Wallet.`, '');
     }
-    el.textContent = 'provider: ' + (flags.join(', ') || 'unknown wallet');
+  }
+
+  function renderWalletPicker() { renderWalletMenu(); refreshWalletStatus(); }
+  function showProviderInfo() { refreshWalletStatus(); }
+
+  function connectErrorMessage(e) {
+    const code = e && e.code;
+    if (code === 4001) return 'Connection rejected in the wallet. Click Connect Wallet and approve the request.';
+    if (code === -32002) return 'A wallet request is already pending. Open your wallet extension and approve it.';
+    if (code === 4902) return 'Base Sepolia is not in your wallet. Approve the add-network prompt.';
+    if (code === -32603) return 'Wallet internal error. Unlock your wallet and try again.';
+    return (e && e.message) || 'Failed to connect wallet.';
   }
 
   async function checkWallet() {
-    showProviderInfo();
-    if (typeof eth() === 'undefined') {
-      // EIP-6963 answers arrive async: give discovery a moment before
-      // declaring no wallet.
-      setTimeout(() => {
-        showProviderInfo();
-        renderWalletPicker();
-        if (typeof eth() === 'undefined' && !discovered.length) {
-          setGlobalError('No wallet detected. Install MetaMask, Coinbase Wallet, or another Web3 wallet.');
-          if (els.homeBtnConnect) {
-            els.homeBtnConnect.disabled = true;
-            els.homeBtnConnect.textContent = 'Wallet Required';
-          }
-        }
-      }, 1500);
+    refreshWalletStatus();
+    const p = eth();
+    if (typeof p === 'undefined') {
+      // Extensions inject late: re-check once before declaring none.
+      setTimeout(() => { renderWalletMenu(); refreshWalletStatus(); }, 1500);
       return;
     }
-
+    // Silent auto-reconnect for a previously connected wallet.
     try {
-      const accounts = await eth().request({ method: 'eth_accounts' });
-      if (accounts.length > 0) {
+      const accounts = await p.request({ method: 'eth_accounts' });
+      let last = null;
+      try { last = localStorage.getItem(LAST_WALLET_KEY); } catch {}
+      if (accounts.length > 0 && last && accounts[0].toLowerCase() === last) {
         await connectWalletWithAddress(accounts[0]);
+      } else {
+        refreshWalletStatus();
       }
     } catch (e) {
       console.warn('Wallet check failed:', e);
+      refreshWalletStatus();
     }
   }
 
   async function connectWallet() {
-    if (typeof eth() === 'undefined') {
-      setGlobalError('No wallet detected. Please install a Web3 wallet.');
+    const p = eth();
+    if (typeof p === 'undefined') {
+      setWalletStatus('No wallet found in this browser. Install MetaMask or Coinbase Wallet, then reload this page.', 'warn');
+      setGlobalError('No wallet detected. Install MetaMask or Coinbase Wallet, then reload.');
+      return;
+    }
+
+    // Several wallets installed: let the user pick which one answers.
+    const choices = providerChoices();
+    if (!state.provider && choices.length > 1 && els.walletMenu) {
+      renderWalletMenu();
+      els.walletMenu.hidden = false;
+      setWalletStatus('Several wallets found. Choose which one to connect.', '');
       return;
     }
 
     try {
       setLoading(true, 'Connecting wallet…');
       clearGlobalError();
+      setWalletStatus('Waiting for the wallet… approve the connection request.', '');
 
-      // If the wallet prompt hangs (locked wallet, blocked popup, wrong
-      // extension answering), say so instead of spinning forever.
       const watchdog = setTimeout(() => {
-        if (state.loading) {
+        if (state.loading && els.loadingText) {
           els.loadingText.textContent =
             'Still waiting: check your wallet extension for a pending ' +
             'prompt. Unlock your wallet and allow popups for this site.';
         }
       }, 15000);
 
-      const accounts = await eth().request({
-        method: 'eth_requestAccounts'
-      });
+      const accounts = await p.request({ method: 'eth_requestAccounts' });
       clearTimeout(watchdog);
 
       if (!accounts.length) throw new Error('No accounts returned');
 
-      const chainId = await eth().request({ method: 'eth_chainId' });
+      const chainId = await p.request({ method: 'eth_chainId' });
       await switchToBaseSepolia(chainId);
 
       await connectWalletWithAddress(accounts[0]);
     } catch (e) {
       console.error('Connect failed:', e);
-      setGlobalError(e.message || 'Failed to connect wallet');
+      const msg = connectErrorMessage(e);
+      setGlobalError(msg);
+      setWalletStatus(msg, 'warn');
     } finally {
       setLoading(false);
     }
@@ -559,19 +513,26 @@
   async function connectWalletWithAddress(address) {
     state.wallet = address.toLowerCase();
     state.connected = true;
+    try { localStorage.setItem(LAST_WALLET_KEY, state.wallet); } catch {}
 
     // Verify chain
-    const chainId = await eth().request({ method: 'eth_chainId' });
-    state.chainId = parseInt(chainId, 16);
+    try {
+      const chainId = await eth().request({ method: 'eth_chainId' });
+      state.chainId = parseInt(chainId, 16);
+    } catch (e) {
+      console.warn('Chain check failed:', e);
+    }
 
-    // Update every screen's wallet display
+    if (els.walletMenu) els.walletMenu.hidden = true;
     updateAllWalletDisplays();
+    clearGlobalError();
 
-    // Fetch balances
+    // Fetch balances (trade page shows them on the token buttons)
     await fetchBalances();
 
-    // Show trade screen
-    showScreen('trade');
+    // Refresh page-specific memory content now that the wallet is known.
+    if (PAGE === 'landing') loadLanding();
+    if (PAGE === 'scars') loadHistory();
   }
 
   async function disconnectWallet() {
@@ -583,10 +544,14 @@
     state.fromAmount = '';
     state.currentQuote = null;
     state.currentDecision = null;
+    try { localStorage.removeItem(LAST_WALLET_KEY); } catch {}
 
     if (els.fromAmount) els.fromAmount.value = '';
+    if (els.walletMenu) els.walletMenu.hidden = true;
     updateAllWalletDisplays();
-    showScreen('home');
+    refreshWalletStatus();
+    if (PAGE === 'landing') loadLanding();
+    if (PAGE === 'scars') loadHistory();
   }
 
   async function fetchBalances() {
@@ -849,6 +814,21 @@
         decision.decision === 'DENY' ? 'DON’T REPEAT THIS' :
         'TRY SAFER TERMS';
     }
+    // Persist the review so the landing demo card shows real values.
+    try {
+      localStorage.setItem('scar.lastDecision', JSON.stringify({
+        pair: `${state.fromToken.symbol} → ${state.toToken.symbol}`,
+        amount: `${fmtNum(amount)} ${state.fromToken.symbol}`,
+        slippage: fmtBps(slip),
+        impact: fmtBps(quote.priceImpactBps || 0),
+        previous: decision.memory
+          ? `${decision.memory.outcome || 'Poor'} execution (${fmtBps(decision.memory.slippageBps)})`
+          : 'No similar past trade',
+        decision: decision.decision === 'ALLOW' ? 'PROCEED'
+          : decision.decision === 'DENY' ? 'DON’T REPEAT THIS' : 'TRY SAFER TERMS',
+        when: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      }));
+    } catch {}
     els.decisionDetails.innerHTML = `
       <div class="detail-row"><span class="detail-label">Pair</span><span class="detail-value">${state.fromToken.symbol} → ${state.toToken.symbol}</span></div>
       <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">${fmtNum(amount)} ${state.fromToken.symbol}</span></div>
@@ -930,7 +910,7 @@
       askRow.style.marginTop = '0.75rem';
       askRow.innerHTML = `<button id="btn-ask-specialist" class="btn btn-secondary" type="button">Ask a specialist agent</button>`;
       els.decisionDetails.appendChild(askRow);
-      $('#btn-ask-specialist').addEventListener('click', () => askSpecialist(quote, decision));
+      on($('#btn-ask-specialist'), 'click', () => askSpecialist(quote, decision));
     }
   }
 
@@ -1178,10 +1158,56 @@
   }
 
   // ──────────────────────────────────────────────────────────────
-  // History
+  // History: important experiences, never a transaction archive
   // ──────────────────────────────────────────────────────────────
+  function scarWhyText(b, importance) {
+    const parts = [];
+    if (b.outcome === 'FAILED') parts.push('the transaction failed on-chain');
+    else if (b.outcome === 'BAD') parts.push('execution was poor');
+    else if (b.outcome === 'GOOD') parts.push('a good run retired an older warning');
+    if ((b.slippageBps || 0) >= 200 || (b.impactBps || 0) >= 200) parts.push('conditions were harsh');
+    parts.push(`importance ${importance}`);
+    return 'Remembered because ' + parts.join(', ') + '.';
+  }
+
+  function scarEffectText(b) {
+    if (b.outcome === 'BAD' || b.outcome === 'FAILED') {
+      return 'A similar trade under similar conditions will be denied or offered safer terms.';
+    }
+    return 'Proves the safer path works; it can retire warnings it outperforms.';
+  }
+
+  function scarCard(m) {
+    const b = m.body || {};
+    const badgeClass = (b.outcome || '').toLowerCase();
+    const tx = b.txHash
+      ? `<span>Tx: <a href="${EXPLORER}/tx/${b.txHash}" target="_blank" rel="noopener">${fmtAddr(b.txHash)}</a></span>` : '';
+    return `
+      <div class="memory-card">
+        <div class="memory-header">
+          <span class="memory-badge ${badgeClass}">${b.outcome || 'UNKNOWN'}</span>
+          <span class="memory-pair">${b.pair || '--'}${b.direction ? ' ' + String(b.direction).toUpperCase() : ''}</span>
+        </div>
+        <div class="memory-meta">
+          <span>Size: ${fmtNum(b.amount)}${b.amountBucket ? ` (${b.amountBucket})` : ''}</span>
+          <span>Slippage: ${fmtBps(b.slippageBps)}</span>
+          ${b.impactBps ? `<span>Impact: ${fmtBps(b.impactBps)}</span>` : ''}
+          <span>${fmtDate(b.ts)}</span>
+          ${tx}
+        </div>
+        <p class="note" style="margin:0.6rem 0 0.25rem">${scarWhyText(b, m.importance || 0)}</p>
+        <p class="note" style="margin:0">${scarEffectText(b)}</p>
+      </div>
+    `;
+  }
+
   async function loadHistory() {
-    if (!state.wallet) return;
+    if (!state.wallet) {
+      if (els.historyList) els.historyList.innerHTML = '';
+      if (els.historyEmpty) els.historyEmpty.style.display = 'block';
+      if (els.scarsSummary) els.scarsSummary.textContent = 'Connect a wallet to see your scars.';
+      return;
+    }
 
     try {
       const res = await fetch(`${API}/history?wallet=${state.wallet}`);
@@ -1190,37 +1216,76 @@
       renderHistory(data.memories || []);
     } catch (e) {
       console.warn('History load failed:', e);
-      els.historyList.innerHTML = '';
-      els.historyEmpty.style.display = 'block';
+      if (els.historyList) els.historyList.innerHTML = '';
+      if (els.historyEmpty) els.historyEmpty.style.display = 'block';
+      if (els.scarsSummary) els.scarsSummary.textContent = 'Could not load memories.';
     }
   }
 
   function renderHistory(memories) {
-    if (!memories.length) {
+    const sorted = [...memories].sort((a, b) =>
+      String((b.body || {}).ts || '').localeCompare(String((a.body || {}).ts || '')));
+    const shown = PAGE === 'landing' ? sorted.slice(0, 3) : sorted;
+    if (!els.historyList) return;
+    if (!sorted.length) {
       els.historyList.innerHTML = '';
-      els.historyEmpty.style.display = 'block';
+      if (els.historyEmpty) els.historyEmpty.style.display = 'block';
+      if (els.scarsSummary) els.scarsSummary.textContent =
+        state.wallet ? 'No scars yet. Make your first trade and Scar will remember what matters.' : 'Connect a wallet to see your scars.';
       return;
     }
+    if (els.historyEmpty) els.historyEmpty.style.display = 'none';
+    els.historyList.innerHTML = shown.map(scarCard).join('');
+    if (els.scarsSummary) {
+      const blockers = sorted.filter(m => ['BAD', 'FAILED'].includes((m.body || {}).outcome)).length;
+      els.scarsSummary.textContent =
+        `${sorted.length} meaningful experience${sorted.length === 1 ? '' : 's'} remembered. ` +
+        `${blockers} poor-outcome trade${blockers === 1 ? '' : 's'} Scar will help you avoid repeating.`;
+    }
+  }
 
-    els.historyEmpty.style.display = 'none';
-    els.historyList.innerHTML = memories.map(m => {
-      const b = m.body || {};
-      const badgeClass = (b.outcome || '').toLowerCase();
-      return `
-        <div class="memory-card">
-          <div class="memory-header">
-            <span class="memory-badge ${badgeClass}">${b.outcome || 'UNKNOWN'}</span>
-            <span class="memory-pair">${b.pair || '--'}</span>
-          </div>
-          <div class="memory-meta">
-            <span>${fmtNum(b.amount)} ${(b.pair || '').split('→')[0]?.trim() || ''}</span>
-            <span>Slippage: ${fmtBps(b.slippageBps)}</span>
-            <span>${fmtDate(b.ts)}</span>
-            ${b.txHash ? `<span>Tx: ${fmtAddr(b.txHash)}</span>` : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
+  // Landing: honest demo card + scars preview from real state.
+  function lastDecision() {
+    try { return JSON.parse(localStorage.getItem('scar.lastDecision') || 'null'); } catch { return null; }
+  }
+
+  async function loadLanding() {
+    const d = lastDecision();
+    if (d) {
+      if (els.demoPairLabel) els.demoPairLabel.textContent = d.pair || 'USDC → WETH';
+      if (els.demoAmount) els.demoAmount.textContent = d.amount || '--';
+      if (els.demoSlippage) els.demoSlippage.textContent = d.slippage || '--';
+      if (els.demoImpact) els.demoImpact.textContent = d.impact || '--';
+      if (els.demoPrevious) els.demoPrevious.textContent = d.previous || 'No similar past trade';
+      if (els.demoDecision) els.demoDecision.textContent = d.decision || 'Review a swap to see Scar decide';
+      if (els.demoSourceNote) els.demoSourceNote.textContent = `Last reviewed${d.when ? ' on ' + d.when : ''}. Live values from your most recent review.`;
+    }
+    if (!state.wallet) {
+      if (els.scarsPreviewList) els.scarsPreviewList.innerHTML = '';
+      if (els.scarsPreviewEmpty) els.scarsPreviewEmpty.style.display = 'block';
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/history?wallet=${state.wallet}`);
+      if (!res.ok) throw new Error('History fetch failed');
+      const data = await res.json();
+      renderHistory(data.memories || []);
+    } catch (e) {
+      console.warn('Landing scars load failed:', e);
+    }
+  }
+
+  async function loadSpecialistLive() {
+    if (!els.specialistLive) return;
+    try {
+      const res = await fetch(`${API}/specialist/status`);
+      const st = await res.json();
+      els.specialistLive.textContent = st.configured
+        ? 'Specialist network: available. Scar consults it when memory is thin.'
+        : 'Specialist network: discovery only right now. Scar decides from memory unless a specialist is configured.';
+    } catch {
+      els.specialistLive.textContent = 'Specialist network: unreachable. Scar decides from memory alone.';
+    }
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -1239,9 +1304,16 @@
     });
 
     // Wallet: header button toggles connect/disconnect.
-    on(els.walletButton, 'click', () => {
+    on(els.walletButton, 'click', (ev) => {
+      ev.stopPropagation();
       if (state.wallet) disconnectWallet();
       else connectWallet();
+    });
+    // Choosing a wallet from the menu must not toggle the button.
+    document.addEventListener('click', (ev) => {
+      if (els.walletMenu && !els.walletMenu.hidden && !els.walletMenu.contains(ev.target)) {
+        els.walletMenu.hidden = true;
+      }
     });
 
     // Token selection
@@ -1297,13 +1369,14 @@
     setTimeout(() => { renderWalletPicker(); showProviderInfo(); }, 1500);
     checkWallet();
 
-    // Initial token button render
-    if (els.fromTokenBtn) updateTokenButton(els.fromTokenBtn, state.fromToken);
-    if (els.toTokenBtn) updateTokenButton(els.toTokenBtn, state.toToken);
-
-    // Single page: load scars/demo content up front (each guards on wallet).
-    loadHomeStats();
-    loadHistory();
+    if (PAGE === 'trade') {
+      // Initial token button render
+      if (els.fromTokenBtn) updateTokenButton(els.fromTokenBtn, state.fromToken);
+      if (els.toTokenBtn) updateTokenButton(els.toTokenBtn, state.toToken);
+    }
+    if (PAGE === 'landing') loadLanding();
+    if (PAGE === 'scars') loadHistory();
+    if (PAGE === 'how') loadSpecialistLive();
   }
 
   if (document.readyState === 'loading') {

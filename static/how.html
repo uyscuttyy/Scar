@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>How it works — SCAR</title>
+  <meta name="description" content="Trade, memory, decision, wallet, Uniswap, Base, outcome, memory. How Scar turns experiences into decisions.">
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Merriweather:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css?v=8">
+</head>
+<body data-page="how">
+  <div id="global-error" class="error-banner" style="display:none" role="alert"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo"><a href="/index.html">SCAR</a></div>
+      <nav class="main-nav" aria-label="Primary">
+        <a class="nav-link active" href="/how.html">How it works</a>
+        <a class="nav-link" href="/scars.html">Your Scars</a>
+        <a class="nav-link nav-cta" href="/trade.html">Start trading</a>
+      </nav>
+      <div class="wallet-wrap">
+        <button class="wallet-button" id="wallet-button" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12V7H5V21H16M16 16a2 2 0 0 1 2 2v-2h-2zm4-8a2 2 0 0 0-2-2h-2v2h2z"></path></svg>
+          <span id="wallet-label">Connect Wallet</span>
+        </button>
+        <div class="wallet-menu" id="wallet-menu" hidden></div>
+      </div>
+    </div>
+    <div class="wallet-status" id="wallet-status" role="status"></div>
+  </header>
+
+  <div class="container">
+    <section class="section" id="how-it-works">
+      <div class="section-header">
+        <div class="section-eyebrow">HOW IT WORKS</div>
+        <h2 class="section-title">A SIMPLE LOOP THAT PROTECTS YOU FROM REPEAT MISTAKES.</h2>
+      </div>
+      <div class="section-body">
+        <div class="steps">
+          <div class="step"><div class="step-number">01</div><div class="step-content"><h3>Make a trade</h3><p>Tell Scar what you want to trade: token, direction, amount.</p></div></div>
+          <div class="step"><div class="step-number">02</div><div class="step-content"><h3>Scar remembers</h3><p>Relevant experiences are retrieved from your wallet-scoped memory. No memory, no vote: without it Scar cannot be experience-aware and says so.</p></div></div>
+          <div class="step"><div class="step-number">03</div><div class="step-content"><h3>Scar compares</h3><p>Current slippage and price impact are compared against the conditions stored with each past experience.</p></div></div>
+          <div class="step"><div class="step-number">04</div><div class="step-content"><h3>Scar decides</h3><p>ALLOW, DENY, or SAFER TERMS. A denial submits zero transactions and names the memory that blocked it.</p></div></div>
+          <div class="step"><div class="step-number">05</div><div class="step-content"><h3>Scar learns</h3><p>Only important outcomes are stored. Routine successes stay journal-only; failures and painful executions become scars.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="condition-aware">
+      <div class="section-header">
+        <div class="section-eyebrow">CONDITION-AWARE MEMORY</div>
+        <h2 class="section-title">SCAR REMEMBERS CONTEXT, NOT JUST EVENTS.</h2>
+      </div>
+      <div class="section-body">
+        <p>Scar does not remember “you traded this token before.” It remembers the conditions around the experience, and compares them with the conditions in front of it.</p>
+        <div class="comparison">
+          <div class="comparison-column">
+            <h3>PREVIOUS EXPERIENCE</h3>
+            <div class="comparison-item"><span class="label">Trade</span><span class="value">USDC → token</span></div>
+            <div class="comparison-item"><span class="label">Slippage</span><span class="value">High</span></div>
+            <div class="comparison-item"><span class="label">Price impact</span><span class="value">High</span></div>
+            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
+          </div>
+          <div class="comparison-column"><div class="vs-label">SAME CONDITIONS →</div></div>
+          <div class="comparison-column">
+            <h3>CURRENT TRADE</h3>
+            <div class="comparison-item"><span class="label">Slippage</span><span class="value">Similar</span></div>
+            <div class="comparison-item"><span class="label">Price impact</span><span class="value">Similar</span></div>
+            <div class="comparison-item"><span class="label">Scar</span><span class="value decision deny">DENY</span></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="comparison">
+          <div class="comparison-column">
+            <h3>PREVIOUS EXPERIENCE</h3>
+            <div class="comparison-item"><span class="label">Outcome</span><span class="value badge badge-bad">Poor execution</span></div>
+          </div>
+          <div class="comparison-column"><div class="vs-label">BETTER CONDITIONS →</div></div>
+          <div class="comparison-column">
+            <h3>CURRENT TRADE</h3>
+            <div class="comparison-item"><span class="label">Slippage</span><span class="value">Much lower</span></div>
+            <div class="comparison-item"><span class="label">Price impact</span><span class="value">Much lower</span></div>
+            <div class="comparison-item"><span class="label">Scar</span><span class="value decision allow">ALLOW</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="uncertain">
+      <div class="section-header">
+        <div class="section-eyebrow">WHEN SCAR ISN’T SURE</div>
+        <h2 class="section-title">IT CAN ASK FOR HELP.</h2>
+      </div>
+      <div class="section-body">
+        <p>When Scar needs additional information, it can request specialist analysis from another agent before its final decision. The specialist advises; Scar decides.</p>
+        <div class="timeline">
+          <div class="timeline-block"><h3>CURRENT TRADE</h3><p>You initiate a swap.</p></div>
+          <div class="timeline-block"><h3>SCAR</h3><p>Evaluates conditions but lacks decisive memory.</p></div>
+          <div class="timeline-block"><h3>UNCERTAIN</h3><p>The trade is flagged for specialist review.</p></div>
+          <div class="timeline-block"><h3>SPECIALIST AGENT</h3><p>Returns risk, a recommended maximum size, and rationale.</p></div>
+          <div class="timeline-block"><h3>FINAL DECISION</h3><p>ALLOW, DENY, or SAFER TERMS, with the analysis attached.</p></div>
+        </div>
+        <div id="specialist-live" class="note">Checking specialist availability…</div>
+      </div>
+    </section>
+
+    <section class="section" id="execution-loop">
+      <div class="section-header">
+        <div class="section-eyebrow">THE EXECUTION LOOP</div>
+        <h2 class="section-title">THE NEXT DECISION IS SHAPED BY THE LAST OUTCOME.</h2>
+      </div>
+      <div class="section-body">
+        <div class="loop">
+          <div class="loop-item"><span class="label">TRADE</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">MEMORY</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">DECISION</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">WALLET</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">UNISWAP</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">BASE</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">OUTCOME</span></div><div class="loop-arrow">↓</div>
+          <div class="loop-item"><span class="label">MEMORY</span></div>
+        </div>
+        <div class="cta-actions" style="justify-content:flex-start;margin-top:2rem">
+          <a class="btn btn-primary" href="/trade.html">Start trading</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="footer-content">
+        <div class="footer-column">
+          <h3>SCAR</h3>
+          <p>Your trading agent that remembers.</p>
+        </div>
+        <div class="footer-column">
+          <h3>Product</h3>
+          <ul>
+            <li><a href="/trade.html">Trade</a></li>
+            <li><a href="/scars.html">Your Scars</a></li>
+            <li><a href="/how.html">How it works</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Technology</h3>
+          <ul>
+            <li><span>Sibyl memory</span></li>
+            <li><span>Virtuals ACP</span></li>
+            <li><span>Base Sepolia</span></li>
+            <li><span>Uniswap v3</span></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <h3>Verify</h3>
+          <ul>
+            <li><a href="https://github.com/uyscuttyy/Scar">GitHub</a></li>
+            <li><a href="https://sepolia.basescan.org">Base Sepolia explorer</a></li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite">
+    <div class="loading-box">
+      <span class="spinner" style="width:1.5rem;height:1.5rem;border-width:3px"></span>
+      <span id="loading-text">Loading…</span>
+    </div>
+  </div>
+
+  <script src="/js/app.js?v=8"></script>
+</body>
+</html>
