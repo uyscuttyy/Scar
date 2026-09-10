@@ -131,6 +131,16 @@ scripts/demo.py    scripted ALLOW → FAIL → DENY demo flow
 e2e_swap.py / e2e_fail.py   live end-to-end scripts (need a funded key)
 ```
 
+## Want the deep dives?
+
+- **[STACKS.md](./STACKS.md)** — every stack Scar stands on and why it's
+  there: Python/FastAPI, Sibyl, Base Sepolia, Uniswap v3, the crypto
+  plumbing, Virtuals ACP, the no-framework frontend, and all env vars.
+- **[MEMORY_IMPLEMENTATION.md](./MEMORY_IMPLEMENTATION.md)** — how
+  remembering actually works: situations, retrieval, the decision rules,
+  importance scoring, supersede logic, and the guarantees (isolation,
+  restart survival, fail-closed, determinism).
+
 ---
 
 ## Troubleshooting
